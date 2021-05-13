@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="STT">
+
+	<select id="R_getKeytypedList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT(KEYTYPE) as name , KEYTYPE as value
+		FROM TA_ADVISER_STOP_WORD ORDER BY KEYTYPE
+	</select>
+	 
+	<select id="R_getKeywordList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT
+			ID, KEYWORD, KEYTYPE, USR_NM, CREATED
+		FROM TA_ADVISER_STOP_WORD
+		WHERE 1=1
+		  <if test="(startDate != null and startDate != '') and (endDate != null and endDate != '')">
+		  	  <!-- AND CREATED >= TO_CHAR(TO_DATE('20191001','YYYYMMDD'),'YYYY-MM-DD') AND CREATED < TO_CHAR(TO_DATE('20201008','YYYYMMDD'),'YYYY-MM-DD') ORDER BY ID DESC ;  -->
+		      AND CREATED <![CDATA[>=]]> TO_CHAR(TO_DATE(#{startDate},'YYYYMMDD'),'YYYY-MM-DD') AND CREATED <![CDATA[<=]]> TO_CHAR(TO_DATE(#{endDate},'YYYYMMDD'),'YYYY-MM-DD')
+		  </if>
+		  <if test="KEYTYPE != null and KEYTYPE != '' and KEYTYPE != 'ALL'">
+			  AND KEYTYPE = #{KEYTYPE}
+		  </if>
+			  ORDER BY ID DESC
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<update id="U_handleKeyword" parameterType="java.util.HashMap">
+		UPDATE TA_ADVISER_STOP_WORD
+		SET KEYWORD = #{KEYWORD}
+			, KEYTYPE = #{KEYTYPE}			
+		WHERE ID = #{ID}
+	</update>
+	
+	<insert id="C_handleKeyword" parameterType="java.util.HashMap">
+		INSERT INTO TA_ADVISER_STOP_WORD (
+			ID, KEYWORD, KEYTYPE, USR_NM, CREATED
+		) VALUES (
+			SEQ_TA_ADVISER_STOP_WORD.NEXTVAL, #{KEYWORD}, #{KEYTYPE}, #{USR_NM}, TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		)
+	</insert>
+	
+	<delete id="D_handleKeyword" parameterType="java.util.HashMap">
+		DELETE FROM TA_ADVISER_STOP_WORD
+		WHERE ID = #{ID}
+	</delete>
+	
+	<select id="R_getSttJobData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CALL_ID, RCD_TP, TEXT, REG_DTM FROM STT_TBL_JOB_DATA WHERE CALL_ID = #{CALL_ID}
+	</select>
+	<select id="R_getJobCallInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CALL_ID, RCD_TP, PATH_NM, FILE_NM, REC_LENGTH FROM STT_TBL_JOB_INFO WHERE CALL_ID = #{CALL_ID}
+	</select>
+	<select id="R_getSelfCallInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CALL_ID, RCD_TP, PATH_NM, FILE_NM, REC_LENGTH FROM STT_TBL_JOB_SELF_INFO WHERE CALL_ID = #{CALL_ID}
+	</select>
+	<select id="R_Keyword" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			A.KEY_WORD
+			, 'red' AS COLOR
+			, A.KEY_TYPE
+			, A.REG_DTM
+		FROM STT_TBL_KEYWORD A
+		WHERE 1=1
+		ORDER BY A.REG_DTM DESC
+	</select>
+	
+</mapper>

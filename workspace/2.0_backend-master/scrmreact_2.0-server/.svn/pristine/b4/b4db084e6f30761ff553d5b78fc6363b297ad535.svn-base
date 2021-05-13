@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="COM">
+	<select id="R_doLogin" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN MAX(A.USR_CD) IS NULL THEN 'USR_CD'
+				 WHEN MAX(C.PWD_ERR_CNT) <![CDATA[>=]]> 5 THEN 'MAX_ERR'
+				 WHEN MAX(C.PWD) != #{PWD} THEN 'PWD_ERR'
+				 WHEN MAX(TO_DATE(C.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')) <![CDATA[<]]> ADD_MONTHS(TRUNC(SYSDATE), -3) THEN 'INIT'
+				 WHEN MAX(B.USR_CD) IS NOT NULL AND MAX(B.CONN_IP) != #{G_CONN_IP} THEN 'LOGIN'
+			ELSE 'Y' END AS RST_CD
+			, MAX(A.CENT_CD) AS CENT_CD
+			, MAX(A.USR_CD) AS USR_CD
+			, MAX(A.AUTH_LV) AS AUTH_LV
+			, MAX(A.TEAM_CD) AS TEAM_CD
+			, '' AS PS_STA_CD
+			, MAX(C.PWD_ERR_CNT) AS PWD_ERR_CNT
+		FROM STT_TBL_USR A
+		LEFT OUTER JOIN TBL_SYS_LGN B
+		ON (A.USR_CD = B.USR_CD)
+		LEFT OUTER JOIN STT_TBL_USR_PWD C
+		ON (C.USR_CD = A.USR_CD)
+		WHERE A.USR_CD = #{USR_CD}
+		AND C.REG_DTM = (
+			SELECT TO_CHAR(T.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')
+			FROM (
+				SELECT MAX(TO_DATE(REG_DTM, 'YYYY-MM-DD HH24:MI:SS')) AS REG_DTM FROM STT_TBL_USR_PWD WHERE USR_CD = #{USR_CD}
+			) T
+		)
+	</select>
+	
+	<update id="U_doLoginAfter" parameterType="java.util.HashMap">
+		MERGE INTO TBL_SYS_LGN A
+		USING DUAL
+		ON (A.USR_CD = #{USR_CD} AND A.CONN_IP = #{G_CONN_IP})
+		WHEN NOT MATCHED THEN
+		INSERT (
+			CONN_IP
+			, USR_CD
+			, LGN_DTM
+		) VALUES (
+			#{G_CONN_IP}
+			, #{USR_CD}
+			, SYSTIMESTAMP
+		)
+		WHEN MATCHED THEN
+		UPDATE SET
+			LGN_DTM = SYSTIMESTAMP
+	</update>
+	
+	<delete id="D_delLogoutInfo" parameterType="java.util.HashMap">
+		DELETE FROM TBL_SYS_LGN
+		WHERE USR_CD = #{G_USR_CD}
+	</delete>
+	
+	<select id="R_getMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			A.MNU_ID
+			, A.MNU_NM
+			, A.PARE_MNU_ID
+			, A.SORT_ORD
+			, A.USE_YN
+			, A.PGM_PATH
+			, A.MNU_KND
+		FROM TBL_SYS_MNU_INF A
+		INNER JOIN TBL_SYS_MNU_AUTH B
+		ON (A.MNU_ID = B.MNU_ID AND B.AUTH_LV = #{AUTH_LV})
+		WHERE A.USE_YN = 'Y'
+		ORDER BY A.SORT_ORD
+	</select>
+	
+	<select id="R_getUserInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			A.USR_CD
+			, A.CENT_CD
+			, SFTM_GET_CENT_NAME(A.CENT_CD) AS CENT_NM
+			, A.TEAM_CD
+			, SFTM_GET_TEAM_NAME(A.CENT_CD, A.TEAM_CD) AS TEAM_NM
+			, A.AUTH_LV
+			, A.USR_NM
+			, B.CONN_IP
+			, '10' AS PS_STA_CD
+			, TO_CHAR(SYSDATE, 'YYYYMMDD') AS LOGIN_DT
+			, A.ACT_STA_CD
+			, A.USE_YN
+		FROM STT_TBL_USR A		
+		LEFT OUTER JOIN TBL_SYS_LGN B
+		ON (A.USR_CD = B.USR_CD)
+		WHERE A.USR_CD = #{USR_CD}
+	</select>
+	
+	<select id="R_getCentStndList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			B.CENT_CD
+			, A.STND_CD
+			, A.STND_CD_NM
+			, B.APY_YN
+			, B.STND_VL
+			, B.ETC1_CONT
+			, B.ETC2_CONT
+		FROM TBL_SYS_STND_SET_INF A
+		LEFT OUTER JOIN TBL_SYS_CENT_SETVL_INF B
+		ON (A.STND_CD = B.STND_CD AND B.CENT_CD = #{CENT_CD})
+		WHERE A.USE_YN = 'Y'
+	</select>
+	
+	<select id="R_getCommCode" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			B.BIG_CD
+			, B.SML_CD AS CODE
+			, B.SML_NM AS CODE_NM
+		FROM STT_TBL_CMN_CD_BIG A
+		INNER JOIN STT_TBL_CMN_CD_SML B
+		ON (A.BIG_CD = B.BIG_CD)
+		WHERE A.USE_YN = 'Y'
+		AND B.USE_YN = 'Y'
+		ORDER BY A.BIG_CD, B.SORT_NO
+	</select>
+	
+	<update id="U_addPwdErrCnt" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_USR_PWD
+		SET PWD_ERR_CNT = PWD_ERR_CNT + 1
+		WHERE USR_CD = #{USR_CD}
+		AND REG_DTM = (
+			SELECT TO_CHAR(T.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')
+			FROM (
+				SELECT MAX(TO_DATE(REG_DTM, 'YYYY-MM-DD HH24:MI:SS')) AS REG_DTM FROM STT_TBL_USR_PWD WHERE USR_CD = #{USR_CD}
+			) T
+		)
+	</update>
+	
+	<update id="U_initPwdErrCnt" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_USR_PWD
+		SET PWD_ERR_CNT = 0
+		WHERE USR_CD = #{USR_CD}
+		AND REG_DTM = (
+			SELECT TO_CHAR(T.REG_DTM, 'YYYY-MM-DD HH24:MI:SS')
+			FROM (
+				SELECT MAX(TO_DATE(REG_DTM, 'YYYY-MM-DD HH24:MI:SS')) AS REG_DTM FROM STT_TBL_USR_PWD WHERE USR_CD = #{USR_CD}
+			) T
+		)
+	</update>
+	
+	<select id="R_getCentList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			CENT_CD AS CODE
+			, CENT_NM AS CODE_NM
+			, BIZ_PSB_YN
+			, #{AUTH_LV} AS AUTH_LV
+		FROM TBL_SYS_CENT_INF
+		WHERE USE_YN = 'Y'
+		<if test="AUTH_LV != '1'.toString()">
+			AND CENT_CD = #{CENT_CD}
+		</if>
+	</select>
+	
+	<select id="R_getTeamList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			CENT_CD AS CENT_CD
+			, TEAM_CD AS CODE
+			, TEAM_NM AS CODE_NM
+		FROM TBL_SYS_TEAM_INF
+		WHERE USE_YN = 'Y'
+		<if test="AUTH_LV == '4'.toString() or AUTH_LV == '5'.toString()">
+			AND TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="AUTH_LV != '1'.toString() and (AUTH_LV != '4'.toString() or AUTH_LV != '5'.toString())">
+			AND TEAM_CD IN (SELECT TEAM_CD FROM TBL_SYS_TEAM_INF WHERE CENT_CD = #{CENT_CD})
+		</if>
+	</select>
+	
+	<select id="R_getUserList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			CENT_CD
+			, TEAM_CD
+			, USR_CD AS CODE
+			, USR_NM AS CODE_NM
+			, AUTH_LV
+			, ACT_STA_CD
+		FROM STT_TBL_USR
+		WHERE USE_YN = 'Y'
+		<if test="AUTH_LV == '4'.toString() or AUTH_LV == '5'.toString()">
+			AND USR_CD = #{USR_CD}
+		</if>
+		<if test="AUTH_LV == '6'.toString()">
+			AND USR_CD IN (SELECT USR_CD FROM STT_TBL_USR WHERE CENT_CD = #{CENT_CD} AND TEAM_CD = #{TEAM_CD})
+		</if>
+		<if test="AUTH_LV != '1'.toString() and (AUTH_LV != '4'.toString() or AUTH_LV != '5'.toString()) and AUTH_LV != '6'.toString()">
+			AND USR_CD IN (SELECT USR_CD FROM STT_TBL_USR WHERE CENT_CD = #{CENT_CD})
+		</if>
+	</select>
+	
+	<select id="R_getMsgList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			MSG_CD
+			, MSG_CONT
+		FROM TBL_SYS_CMN_MSG_CD
+		WHERE USE_YN = 'Y'
+	</select>
+	
+	<select id="R_chkCurUsrPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN MAX(T.PWD) IS NULL THEN 'USR'
+				 WHEN MAX(T.PWD) = #{CUR_PWD} THEN 'Y' 
+				 ELSE 'N' 
+			END AS MAT_YN
+		FROM (
+			SELECT PWD, ROW_NUMBER() OVER (ORDER BY TO_DATE(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') DESC) AS RN
+			FROM STT_TBL_USR A
+			INNER JOIN STT_TBL_USR_PWD B
+			ON (A.USR_CD = B.USR_CD)
+			WHERE A.USR_CD = #{USR_CD}
+		) T
+		WHERE T.RN = 1
+	</select>
+	
+	<select id="R_chkNewPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN MAX(T.PWD) IS NULL THEN 'N' ELSE 'Y' END AS DUP_YN
+		FROM (
+			SELECT A.PWD
+			FROM (
+				SELECT USR_CD, PWD, TO_DATE(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+				FROM STT_TBL_USR_PWD
+			) A
+			WHERE A.USR_CD = #{USR_CD}
+			AND A.REG_DTM <![CDATA[>]]> ADD_MONTHS(SYSDATE, -6)
+		) T
+		WHERE T.PWD = #{NEW_PWD}
+	</select>
+	
+	<insert id="C_addUsrPwd" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_USR_PWD (
+			USR_CD
+			, PWD
+			, PWD_ERR_CNT
+			, REG_DTM
+		) VALUES (
+			#{USR_CD}
+			, #{NEW_PWD}
+			, 0
+			, TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		)
+	</insert>
+	
+	<select id="R_getUserListTEST" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT
+			CENT_CD, TEAM_CD, USR_CD, USR_NM AS ENC_USR_NM, AUTH_LV, BIZ_PSB_YN, USE_YN
+		FROM TBL_TMP_TEST
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<select id="R_getUserListTESTCnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT COUNT(1) AS CNT
+		FROM TBL_TMP_TEST
+	</select>
+	
+	<update id="U_handleTEST" parameterType="java.util.HashMap">
+		UPDATE TBL_TMP_TEST
+		SET USR_NM = #{ENC_USR_NM}
+			, AUTH_LV = #{AUTH_LV}
+			, BIZ_PSB_YN = #{BIZ_PSB_YN}
+			, USE_YN = #{USE_YN}
+		WHERE USR_CD = #{USR_CD}
+	</update>
+	<insert id="C_handleTEST" parameterType="java.util.HashMap">
+		INSERT INTO TBL_TMP_TEST (
+			CENT_CD, TEAM_CD, USR_CD, USR_NM, AUTH_LV, BIZ_PSB_YN, USE_YN
+		) VALUES (
+			#{CENT_CD}, #{TEAM_CD}, #{USR_CD}, #{ENC_USR_NM}, #{AUTH_LV}, #{BIZ_PSB_YN}, #{USE_YN}
+		)
+	</insert>
+	<delete id="D_handleTEST" parameterType="java.util.HashMap">
+		DELETE FROM TBL_TMP_TEST
+		WHERE USR_CD = #{ORG_USR_CD}
+	</delete>	
+	
+	<select id="R_getSrvList" parameterType="java.util.HashMap" resultType="java.util.HashMap">		
+		SELECT DISTINCT (SV_NM) as name, SV_NM as value FROM STT_TBL_RES_STATISTIC
+	</select>	
+		
+	<!-- 서버 일일 자원 통계 -->
+	<select id="R_getSrvResourceStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">		
+		SELECT *
+			 FROM (SELECT * 
+			 		FROM STT_TBL_RES_STATISTIC_DAILY
+				   WHERE SV_NM = #{SV_NM} ORDER BY REG_DTM DESC
+				   )
+		WHERE ROWNUM <![CDATA[<=]]> 1
+	</select>
+	
+	
+	<!-- 서버 작업 통계 -->
+	<!-- <select id="R_getSrvJobStatistic" parameterType="java.util.HashMap" resultType="java.util.HashMap">			
+		SELECT SV_NM, JOB_TP, TOTAL_CNT, SUCC_CNT, FAIL_CNT, FILE_SIZE, FILE_LENGTH
+  			FROM (SELECT *
+          			FROM STT_TBL_JOB_STATISTIC ORDER BY REG_DT DESC
+        		  )		
+		WHERE ROWNUM <![CDATA[<=]]> 1 
+	</select> -->
+	
+	<select id="R_getSrvJobStatistic" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT SV_NM, SUM(TOTAL_CNT) as TOTAL_CNT , SUM(SUCC_CNT) as SUCC_CNT, SUM(FAIL_CNT) as FAIL_CNT, SUM(FILE_SIZE) as FILE_SIZE , SUM(FILE_LENGTH) as FILE_LENGTH
+			FROM STT_TBL_JOB_STATISTIC 
+		WHERE SV_NM = #{SV_NM} GROUP BY SV_NM
+	</select>
+	
+	<!-- 서버 일일 작업 통계 -->
+	<!-- <select id="R_getSrvJobStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT REG_TIME, TOTAL_CNT, SUCC_CNT, FAIL_CNT, FILE_SIZE, FILE_LENGTH
+  			FROM (SELECT *
+          			FROM STT_TBL_JOB_STATISTIC_DAILY 
+        		  WHERE JOB_TP = 'N' ORDER BY REG_TIME DESC
+        		  )
+ 		WHERE ROWNUM <![CDATA[<=]]> 1
+	</select> -->
+	<select id="R_getSrvJobStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT *
+  			FROM (SELECT *
+          			FROM STT_TBL_JOB_STATISTIC_DAILY 
+        		   WHERE SUBSTR(REG_TIME, 0, 10) = TO_CHAR(SYSDATE,'YYYY-MM-DD')
+        		   		 ORDER BY SV_NM, REG_TIME DESC
+        		  )
+	</select>
+</mapper>

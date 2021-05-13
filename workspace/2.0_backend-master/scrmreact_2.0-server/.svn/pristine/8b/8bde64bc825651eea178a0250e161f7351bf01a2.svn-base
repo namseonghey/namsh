@@ -1,0 +1,249 @@
+#이 파일은 기분석 사전입니다.
+#기분석 사전은 어절이 100% 일치하는 경우에만 적용이 됩니다.
+#분석된 결과의 품사열은 grammar에서 출현 가능한 형태여야 합니다.
+#아래는 잘못된 예를 나타냅니다.
+#감기는	감/NNG 기/ETM 는/JKG -> grammar.in에는 NNG 다음에 ETM이 나오는 경우가 없으므로 적용 안됨
+#파일 형식은 아래와 같습니다.
+#[분석대상어절]\t[형태소1/품사1] [형태소2/품사2] ...
+감기는	감/NNG 기는/NNG
+바랬어요	바라었/NP
+흘렸어요	흘리/VV 었/EP 어요/EC
+천천히	천천히/MAG
+개월	개월/NNP
+삼십육개월	삼/NR 십/NR 육/NR 개월/NNP
+십만	십/NR 만/NNP
+이십만	이/NR 십/NR 만/NNP
+삼십만	삼/NR 십/NR 만/NNP
+사십만	사/NR 십/NR 만/NNP
+오십만	오/NR 십/NR 만/NNP
+육십만	육/NR 십/NR 만/NNP
+칠십만	칠/NR 십/NR 만/NNP
+팔십만	팔/NR 십/NR 만/NNP
+구십만	구/NR 십/NR 만/NNP
+일호	일/NR 호/NNP
+이호	이/NR 호/NNP
+삼호	삼/NR 호/NNP
+사호	사/NR 호/NNP
+오호	오/NR 호/NNP
+육호	육/NR 호/NNP
+칠호	칠/NR 호/NNP
+팔호	팔/NR 호/NNP
+구호	구/NR 호/NNP
+십호	십/NR 호/NNP
+이십	이/NR 십/NR
+삼십	삼/NR 십/NR
+사십	사/NR 십/NR
+오십	오/NR 십/NR
+육십	육/NR 십/NR
+칠십	칠/NR 십/NR
+팔십	팔/NR 십/NR
+구십	구/NR 십/NR
+일백	일/NR 백/NR
+이백	이/NR 백/NR
+삼백	삼/NR 백/NR
+사백	사/NR 백/NR
+오백	오/NR 백/NR
+육백	육/NR 백/NR
+칠백	칠/NR 백/NR
+팔백	팔/NR 백/NR
+구백	구/NR 백/NR
+일천	일/NR 천/NR
+이천	이/NR 천/NR
+삼천	삼/NR 천/NR
+사천	사/NR 천/NR
+오천	오/NR 천/NR
+육천	육/NR 천/NR
+칠천	칠/NR 천/NR
+팔천	팔/NR 천/NR
+구천	구/NR 천/NR
+일만	일/NR 만/NNP
+이만	이/NR 만/NNP
+삼만	삼/NR 만/NNP
+사만	사/NR 만/NNP
+오만	오/NR 만/NNP
+육만	육/NR 만/NNP
+칠만	칠/NR 만/NNP
+팔만	팔/NR 만/NNP
+구만	구/NR 만/NNP
+일억	일/NR 억/NNP
+이억	이/NR 억/NNP
+삼억	삼/NR 억/NNP
+사억	사/NR 억/NNP
+오억	오/NR 억/NNP
+육억	육/NR 억/NNP
+칠억	칠/NR 억/NNP
+팔억	팔/NR 억/NNP
+구억	구/NR 억/NNP
+일만원	일/NR 만원/NNP
+이만원	이/NR 만원/NNP
+삼만원	삼/NR 만원/NNP
+사만원	사/NR 만원/NNP
+오만원	오/NR 만원/NNP
+육만원	육/NR 만원/NNP
+칠만원	칠/NR 만원/NNP
+팔만원	팔/NR 만원/NNP
+구만원	구/NR 만원/NNP
+일억원	일/NR 억원/NNP
+이억원	이/NR 억원/NNP
+삼억원	삼/NR 억원/NNP
+사억원	사/NR 억원/NNP
+오억원	오/NR 억원/NNP
+육억원	육/NR 억원/NNP
+칠억원	칠/NR 억원/NNP
+팔억원	팔/NR 억원/NNP
+구억원	구/NR 억원/NNP
+일에	일/NR 에/JKB
+이에	이/NR 에/JKB
+삼에	삼/NR 에/JKB
+사에	사/NR 에/JKB
+오에	오/NR 에/JKB
+육에	육/NR 에/JKB
+칠에	칠/NR 에/JKB
+팔에	팔/NR 에/JKB
+구에	구/NR 에/JKB
+영에	영/NR 에/JKB
+공에	공/NR 에/JKB
+공	공/NR
+일	일/NR
+#이	 이/NR
+삼	삼/NR
+사	사/NR
+오	오/NR
+육	육/NR
+칠	칠/NR
+팔	팔/NR
+구	구/NR
+영	영/NR
+하나	하나/NR
+둘	둘/NR
+셋	셋/NR
+넷	넷/NR
+다섯	다섯/NR
+여섯	여섯/NR
+일곱	일곱/NR
+여덟	여덟/NR
+아홉	아홉/NR
+하나하나	하나/NR 하나/NR
+하나요	하나/NR 요/EC
+구십구	구/NR 십/NR 구/NR
+구십구만원짜리	구/NR 십/NR 구/NR 만원짜리/NNP
+일분	일/NR 분/NNB
+이분	이/NR 분/NNB
+삼분	삼/NR 분/NNB
+사분	사/NR 분/NNB
+오분	오/NR 분/NNB
+육분	육/NR 분/NNB
+칠분	칠/NR 분/NNB
+팔분	팔/NR 분/NNB
+구분	구/NR 분/NNB
+십분	십/NR 분/NNB
+백삼	백/NR 삼/NR
+이백원	이/NR 백/NR 원/NNB
+삼백원	삼/NR 백/NR 원/NNB
+사백원	사/NR 백/NR 원/NNB
+오백원	오/NR 백/NR 원/NNB
+육백원	육/NR 백/NR 원/NNB
+칠백원	칠/NR 백/NR 원/NNB
+팔백원	팔/NR 백/NR 원/NNB
+구백원	구/NR 백/NR 원/NNB
+구천구	구/NR 천/NR 구/NR
+구천구백	구/NR 천/NR 구백/NR
+구천구백원씩	구/NR 천/NR 구/NR 백/NR 원씩/NNB
+구천구백원	구/NR 천/NR 구/NR 백/NR 원/NNB
+일일생	일/NR 일생/NNG
+일개월	일/NR 개월/NNB
+이개월	이/NR 개월/NNB
+삼개월	삼/NR 개월/NNB
+사개월	사/NR 개월/NNB
+오개월	오/NR 개월/NNB
+육개월	육/NR 개월/NNB
+칠개월	칠/NR 개월/NNB
+팔개월	팔/NR 개월/NNB
+구개월	구/NR 개월/NNB
+십개월	십/NR 개월/NNB
+십일월	십/NR 일/NR 월/NNB
+십이월	십/NR 이/NR 월/NNB
+십일개월	십/NR 일/NR 개월/NNB
+십이개월	십/NR 이/NR 개월/NNB
+십삽개월	십/NR 삼/NR 개월/NNB
+십사개월	십/NR 사/NR 개월/NNB
+십오개월	십/NR 오/NR 개월/NNB
+십육개월	십/NR 육/NR 개월/NNB
+십칠개월	십/NR 칠/NR 개월/NNB
+십팔개월	십/NR 팔/NR 개월/NNB
+십구개월	십/NR 구/NR 개월/NNB
+이십개월	이/NR 십/NR 개월/NNB
+이십일개월	이/NR 십/NR 일/NR 개월/NNB
+이십이개월	이/NR 십/NR 이/NR 개월/NNB
+이십삼개월	이/NR 십/NR 삼/NR 개월/NNB
+이십사개월	이/NR 십/NR 사/NR 개월/NNB
+이십오개월	이/NR 십/NR 오/NR 개월/NNB
+이십육개월	이/NR 십/NR 육/NR 개월/NNB
+이십칠개월	이/NR 십/NR 칠/NR 개월/NNB
+이십팔개월	이/NR 십/NR 팔/NR 개월/NNB
+이십구개월	이/NR 십/NR 구/NR 개월/NNB
+삼십개월	삼/NR 십/NR 개월/NNB
+삼십일개월	삼/NR 십/NR 일/NR 개월/NNB
+삼십이개월	삼/NR 십/NR 이/NR 개월/NNB
+삼십삼개월	삼/NR 십/NR 삼/NR 개월/NNB
+삼십사개월	삼/NR 십/NR 사/NR 개월/NNB
+삼십오개월	삼/NR 십/NR 오/NR 개월/NNB
+삼십육개월	삼/NR 십/NR 육/NR 개월/NNB
+일동	일/NR 동/NNG
+이동	이/NR 동/NNG
+삼동	삼/NR 동/NNG
+사동	사/NR 동/NNG
+오동	오/NR 동/NNG
+육동	육/NR 동/NNG
+칠동	칠/NR 동/NNG
+팔동	팔/NR 동/NNG
+구동	구/NR 동/NNG
+십동	십/NR 동/NNG
+일호	일/NR 호/NNG
+이호	이/NR 호/NNG
+삼호	삼/NR 호/NNG
+사호	사/NR 호/NNG
+오호	오/NR 호/NNG
+육호	육/NR 호/NNG
+칠호	칠/NR 호/NNG
+팔호	팔/NR 호/NNG
+구호	구/NR 호/NNG
+십호	십/NR 호/NNG
+백일호	백/NR 일/NR 호/NNG
+백이호	백/NR 이/NR 호/NNG
+백삼호	백/NR 삼/NR 호/NNG
+백사호	백/NR 사/NR 호/NNG
+백오호	백/NR 오/NR 호/NNG
+백육호	백/NR 육/NR 호/NNG
+백칠호	백/NR 칠/NR 호/NNG
+백팔호	백/NR 팔/NR 호/NNG
+백구호	백/NR 구/NR 호/NNG
+백십호	백/NR 십/NR 호/NNG
+삼구	삼/NR 구/NR
+팔칠	팔/NR 칠/NR
+팔구	팔/NR 구/NR
+육팔	육/NR 팔/NR
+오팔	오/NR 팔/NR
+구삼	구/NR 삼/NR
+오이	오/NR 이/NR
+둘둘	둘/NR 둘/NR
+공일공	공/NR 일/NR 공/NR
+둘째	둘째/NNG
+오공	오/NR 공/NR
+육년	육/NR 년/NNG
+오세	오/NR 세/NNG
+육구	육/NR 구/NR
+육구구	육/NR 구/NR 구/NR
+구에요	구/NR 에/JKB 요/JX
+사구팔입니다	사/NR 구/NR 팔/NR 이/VCP ㅂ니다/EC
+일구구	일/NR 구/NR 구/NR
+오공팔	오/NR 공/NR 팔/NR
+사일구	사/NR 일/NR 구/NR
+팔사	팔/NR 사/NR
+팔오	팔/NR 오/NR
+육이	육/NR 이/NR
+삼일	삼/NR 일/NR
+한시	한/NR 시/NNB
+세시	세/NR 시/NNB
+백화점	백화점/NNP
+십사일	십/NR 사/NR 일/NNB

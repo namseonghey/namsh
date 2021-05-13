@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SYS">
+	<!-- 대분류 코드 조회 -->
+	<select id="R_getBigCdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT BIG_CD
+		     , BIG_NM
+		     , USE_YN			
+		FROM   STT_TBL_CMN_CD_BIG B
+		<if test="BIG_CD_NM != ''">
+		WHERE  BIG_CD = #{BIG_CD_NM}
+		OR     BIG_NM = #{BIG_CD_NM}  
+		</if>
+		ORDER BY BIG_CD
+	</select>
+	
+	<!-- 소분류 코드 조회 -->
+	<select id="R_getSmlCdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT BIG_CD
+		     , SML_CD
+		     , SML_NM
+		     , SORT_NO
+		     , USE_YN			
+		FROM   STT_TBL_CMN_CD_SML S
+		WHERE  BIG_CD =#{BIG_CD}
+		ORDER BY SORT_NO, SML_CD
+	</select>
+	
+	<!-- 대분류 코드 수정 -->
+	<update id="U_handleBigCdList" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_CMN_CD_BIG
+		SET    BIG_NM  = #{BIG_NM}
+             , USE_YN  = #{USE_YN}
+             , CHG_DTM = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		WHERE  BIG_CD  = #{BIG_CD}
+	</update>
+	
+	<!-- 대분류 코드 추가 -->
+	<insert id="C_handleBigCdList" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_CMN_CD_BIG (
+			BIG_CD
+		  , BIG_NM
+		  , USE_YN
+		  , CHG_DTM
+		) VALUES (
+			#{BIG_CD}
+		  , #{BIG_NM}
+		  , #{USE_YN}
+		  , TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		)
+	</insert>
+	
+	<!-- 소분류 코드 수정 -->
+	<update id="U_handleSmlCdList" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_CMN_CD_SML
+		SET    SML_NM  = #{SML_NM}
+             , USE_YN  = #{USE_YN}
+             , SORT_NO = #{SORT_NO}
+             , CHG_DTM = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		WHERE  BIG_CD  = #{BIG_CD}
+		AND    SML_CD  = #{SML_CD}
+	</update>
+	
+	<!-- 소분류 코드 추가 -->
+	<insert id="C_handleSmlCdList" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_CMN_CD_SML (
+			BIG_CD
+		  , SML_CD
+		  , SML_NM
+		  , SORT_NO
+		  , USE_YN
+		  , CHG_DTM
+		) VALUES (
+			#{BIG_CD}
+		  , #{SML_CD}
+		  , #{SML_NM}
+		  , #{SORT_NO}
+		  , #{USE_YN}
+		  , TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+		)
+	</insert>
+
+	<!-- 메뉴관리 코드 조회 -->
+	<select id="R_getMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			MNU_ID
+			, MNU_NM
+			, PARE_MNU_ID
+			, SORT_ORD
+			, USE_YN
+			, PGM_PATH
+			, MNU_KND
+		FROM TBL_SYS_MNU_INF
+		WHERE 1=1
+		<if test="MENU_ID != ''">
+		AND MNU_ID LIKE '%'||#{MENU_ID}||'%'
+		</if>
+		<if test="MENU_NM != ''">
+		AND MNU_NM LIKE '%'||#{MENU_NM}||'%'
+		</if>
+		<if test="MNU_KND != ''">
+		AND MNU_KND = #{MNU_KND}
+		</if>
+		<if test="USE_YN != ''">
+		AND USE_YN = #{USE_YN}
+		</if>
+	</select>
+	
+	<!-- 메뉴관리 코드 수정 -->
+	<update id="U_handleMenuList" parameterType="java.util.HashMap">
+		UPDATE TBL_SYS_MNU_INF
+		SET MNU_NM = #{MNU_NM}
+		  , PARE_MNU_ID = #{PARE_MNU_ID}
+		  , MNU_KND = #{MNU_KND}
+		  , PGM_PATH = #{PGM_PATH}
+		  , SORT_ORD = #{SORT_ORD}
+		  , USE_YN = #{USE_YN}
+		  , CHG_DTM = SYSDATE
+		  , CHG_ID = #{G_USR_CD}
+		WHERE MNU_ID = #{MNU_ID}
+	</update>
+	
+	<!-- 메뉴관리 코드 추가 -->
+	<insert id="C_handleMenuList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_SYS_MNU_INF (MNU_ID, MNU_NM, PARE_MNU_ID, MNU_KND, PGM_PATH, SORT_ORD, USE_YN, REG_DTM, REG_ID, CHG_DTM, CHG_ID) 
+		VALUES (#{MNU_ID}, #{MNU_NM}, #{PARE_MNU_ID}, #{MNU_KND}, #{PGM_PATH}, #{SORT_ORD}, #{USE_YN}, SYSDATE, #{G_USR_CD}, SYSDATE, #{G_USR_CD})
+	</insert>
+	
+	<!-- 메뉴관리 코드 삭제 -->
+	<delete id="D_handleMenuList" parameterType="java.util.HashMap">
+		DELETE FROM TBL_SYS_MNU_INF
+		WHERE  MNU_ID = #{MNU_ID}
+	</delete>
+	
+	<!-- 사용자 조회 -->
+	<select id="R_getUserList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT	A.USR_CD
+			, 	A.USR_NM
+			,	A.AUTH_LV
+			,   SFTM_GET_CODE_NAME('AUTH_LV', A.AUTH_LV) AS AUTH_LV_NM
+			,	A.REG_ID
+			,	A.REG_DTM
+			,	A.CHG_ID
+			,	A.CHG_DTM
+			,	A.CENT_CD
+			,	A.TEAM_CD
+			,	(SELECT CENT_NM FROM TBL_SYS_CENT_INF WHERE CENT_CD = A.CENT_CD) AS CENT_NM
+			,	(SELECT TEAM_NM FROM TBL_SYS_TEAM_INF WHERE CENT_CD = A.CENT_CD AND TEAM_CD = A.TEAM_CD) AS TEAM_NM
+			,	NVL(A.ACT_STA_CD, 'I') AS ACT_STA_CD 
+			,	A.USE_YN			
+		FROM   STT_TBL_USR A
+		WHERE 1=1
+		<if test="CENT_CD != null and CENT_CD != ''">
+			AND A.CENT_CD = #{CENT_CD}
+		</if>
+		<if test="TEAM_CD != null and TEAM_CD != ''">
+			AND A.TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="AUTH_LV != null and AUTH_LV != ''">
+			AND A.AUTH_LV = #{AUTH_LV}
+		</if>
+		<if test="SRCH_DV != '' and SRCH_DV == 'NM' and SRCH_VALUE != ''">
+			AND A.USR_NM = #{SRCH_VALUE}
+		</if>
+		<if test="SRCH_DV != '' and SRCH_DV == 'ID' and SRCH_VALUE != ''">
+			AND A.USR_CD = #{SRCH_VALUE}
+		</if>
+		ORDER BY A.CENT_CD, A.TEAM_CD, A.USR_NM
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<!-- 초기 비밀번호 기준값 조회 -->
+	<select id="R_PwdStndCode" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT  STND_VL
+			,	APY_YN
+		FROM	TBL_SYS_CENT_SETVL_INF
+		WHERE	CENT_CD = #{CENT_CD}
+		AND		STND_CD = #{STND_CD}
+		ORDER BY STND_CD
+	</select>
+	
+	<!-- 사용자 정보 merge -->
+	<update id="U_mergeUserInfo" parameterType="java.util.HashMap">
+		MERGE INTO STT_TBL_USR A
+		USING DUAL
+		ON (A.USR_CD = #{USR_CD})
+		WHEN NOT MATCHED THEN
+		INSERT (
+				USR_CD
+			, 	USR_NM
+			,	AUTH_LV
+			,	REG_ID
+			,	REG_DTM
+			,	CHG_ID
+			,	CHG_DTM
+			,	CENT_CD
+			,	TEAM_CD
+			,	ACT_STA_CD 
+			,	USE_YN	
+		) VALUES (
+				#{USR_CD}
+			, 	#{USR_NM}
+			,	#{AUTH_LV}
+			,	#{REG_ID}
+			,	TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			,	#{CHG_ID}
+			,	TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			,	#{CENT_CD}
+			,	#{TEAM_CD}
+			,	#{ACT_STA_CD} 
+			,	#{USE_YN}
+		)
+		WHEN MATCHED THEN
+		UPDATE SET
+				USR_NM 		= #{USR_NM}
+			,	AUTH_LV		= #{AUTH_LV}
+			,	CENT_CD		= #{CENT_CD}
+			,	TEAM_CD		= #{TEAM_CD}
+			,	ACT_STA_CD	= #{ACT_STA_CD}
+			,	USE_YN		= #{USE_YN}
+			,	CHG_ID		= #{CHG_ID}
+			,	CHG_DTM		= TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+	</update>
+	
+	<!-- 사용자 정보 비밀번호 등록 -->
+	<!-- 
+	<update id="C_PwdInit" parameterType="java.util.HashMap">
+		MERGE INTO STT_TBL_USR_PWD A
+		USING DUAL
+		ON (A.USR_CD = #{USR_CD})
+		WHEN NOT MATCHED THEN
+		INSERT (
+				USR_CD
+			,	PWD
+			,	REG_ID
+			,	REG_DTM
+			,	PWD_ERR_CNT
+		)VALUES( 
+				#{USR_CD}
+			,	#{INIT_PWD} 
+			,	#{CHG_ID}
+			,	TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			,	0
+		)
+		WHEN MATCHED THEN
+		UPDATE SET
+				PWD 		= #{INIT_PWD}
+			,	REG_ID		= #{CHG_ID}
+			,	REG_DTM		= TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+	</update>
+	-->
+	 
+	<insert id="C_PwdInit" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_USR_PWD(
+				USR_CD
+			,	PWD
+			,	REG_ID
+			,	REG_DTM
+			,	PWD_ERR_CNT
+		)VALUES( 
+				#{USR_CD}
+			,	#{INIT_PWD} 
+			,	#{REG_ID}	
+			,	TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+			,	0
+		)
+	</insert>	
+	
+	
+	<!-- 사용자 정보 로그인 초기화 -->
+	<delete id="D_LoginInfo" parameterType="java.util.HashMap">
+		DELETE FROM TBL_SYS_LGN
+		WHERE 	CONN_IP = (	SELECT A.CONN_IP
+							FROM TBL_SYS_LGN A
+							WHERE A.USR_CD = #{USR_CD} )
+		AND		USR_CD = #{USR_CD}
+	</delete>
+	
+	<!-- 사용자코드 중복 체크	-->
+	<select id="R_getUserCheck" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT	COUNT(USR_CD) AS CHK_CNT
+		FROM	STT_TBL_USR
+		WHERE 	USR_CD = #{USR_CD}
+	</select>
+	
+
+	<!-- 기준값관리 조회 -->
+   <select id="R_getStndValInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+      <include refid="CMM.PAGING_HEAD"/>
+      SELECT STND_CD
+      		, STND_CD_NM
+         	, USE_YN
+         	, APY_PTY_USE_YN
+			, CENT_USR_MFY_PSB_YN
+			, STND_VL_PTY_USE_YN
+			, ETC1_PTY_USE_YN
+			, ETC2_PTY_USE_YN
+			, SORT_ORD
+			, TO_CHAR(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+      FROM TBL_SYS_STND_SET_INF 
+      WHERE 1=1
+      <if test="STND_CD_NAME != ''">
+         AND  (STND_CD = #{STND_CD_NAME}
+		 OR    STND_CD_NM = #{STND_CD_NAME})
+      </if>  
+      <if test="USE_YN != ''">
+		 AND USE_YN = #{USE_YN}
+	 </if>
+	  <if test="APY_PTY_USE_YN != ''">
+		 AND APY_PTY_USE_YN = #{APY_PTY_USE_YN}
+	 </if>
+ 	<if test="STND_VL_PTY_USE_YN != ''">
+		 AND STND_VL_PTY_USE_YN = #{STND_VL_PTY_USE_YN}
+	 </if>
+      ORDER BY STND_CD DESC 
+      <include refid="CMM.PAGING_TAIL"/>
+   </select>
+   
+   
+
+   <!--  기준값 관리 수정 -->
+	<update id="U_handleStndValInfo" parameterType="java.util.HashMap">
+		UPDATE TBL_SYS_STND_SET_INF
+		SET    STND_CD  = #{STND_CD}
+             , STND_CD_NM  = #{STND_CD_NM}
+             , USE_YN  = #{USE_YN}
+             , APY_PTY_USE_YN  = #{APY_PTY_USE_YN}
+             , CENT_USR_MFY_PSB_YN  = #{CENT_USR_MFY_PSB_YN}
+             , STND_VL_PTY_USE_YN  = #{STND_VL_PTY_USE_YN}
+             , ETC1_PTY_USE_YN  = #{ETC1_PTY_USE_YN}
+             , ETC2_PTY_USE_YN  = #{ETC2_PTY_USE_YN}
+             , SORT_ORD  = #{SORT_ORD}
+           	 , REG_DTM = SYSDATE
+		WHERE  STND_CD  = #{STND_CD}
+	</update>
+	
+   
+   <!--  기준값 관리 추가 -->
+   <insert id="C_handleStndValInfo" parameterType="java.util.HashMap">
+      INSERT INTO TBL_SYS_STND_SET_INF (
+           STND_CD
+         , STND_CD_NM, USE_YN
+         , APY_PTY_USE_YN
+         , CENT_USR_MFY_PSB_YN
+         , STND_VL_PTY_USE_YN
+         , ETC1_PTY_USE_YN
+         , ETC2_PTY_USE_YN
+         , SORT_ORD
+         , REG_DTM
+      ) VALUES (
+         #{STND_CD}, #{STND_CD_NM}, #{USE_YN},
+         #{APY_PTY_USE_YN}, #{CENT_USR_MFY_PSB_YN}, #{STND_VL_PTY_USE_YN},
+         #{ETC1_PTY_USE_YN}, #{ETC2_PTY_USE_YN},
+         #{SORT_ORD}, SYSDATE
+       <!-- TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS') -->
+      )
+   </insert>
+   
+   <!--  기준값관리  삭제 -->
+   <delete id="D_handleStndValInfo" parameterType="java.util.HashMap" >
+      DELETE   FROM TBL_SYS_STND_SET_INF    
+      WHERE   STND_CD=#{STND_CD}
+   </delete>
+
+
+   <!-- 센터관리 : 센터 정보 조회 -->
+   <select id="R_getCentList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+   		<include refid="CMM.PAGING_HEAD"/>
+		SELECT CENT_CD
+      		,	CENT_NM
+      		,	BIZ_PSB_YN
+      		,	USE_YN
+      		,	TO_CHAR(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+      	FROM TBL_SYS_CENT_INF C
+      	WHERE 1=1
+      	<if test="CENT_CD_NAME != ''">
+         AND  (CENT_CD = #{CENT_CD_NAME}
+		 OR    CENT_NM = #{CENT_CD_NAME})
+     	 </if>  
+		<if test="USE_YN != ''">
+			AND USE_YN = #{USE_YN}
+		</if>
+		ORDER BY CENT_CD DESC 
+		<include refid="CMM.PAGING_TAIL"/>
+   </select>
+   
+   <!-- 센터관리 : 팀정보 조회 -->
+   <select id="R_getTeamList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+  		<include refid="CMM.PAGING_HEAD"/>
+		SELECT  CENT_CD
+			,	TEAM_CD
+      		,	TEAM_NM
+      		,	USE_YN
+      		,	TO_CHAR(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+      	FROM TBL_SYS_TEAM_INF T
+  		WHERE  CENT_CD=#{CENT_CD}
+		ORDER BY TEAM_CD DESC 
+		<include refid="CMM.PAGING_TAIL"/>
+   </select>
+   
+   <!-- 센터관리 : 기준값 정보 조회 -->
+   <select id="R_dsCentStndValList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+  		<include refid="CMM.PAGING_HEAD"/>
+		SELECT A.STND_CD AS STND_CD
+			,	A.STND_CD_NM AS STND_CD_NM
+   			,	B.STND_VL AS STND_VL
+    		,	B.APY_YN AS APY_YN
+    		,	B.ETC1_CONT AS ETC1_CONT
+    		,	B.ETC2_CONT AS ETC2_CONT
+		FROM 
+			TBL_SYS_STND_SET_INF A
+		LEFT OUTER JOIN 
+			TBL_SYS_CENT_SETVL_INF B
+		ON A.STND_CD = B.STND_CD
+		<!--  WHERE  B.CENT_CD=#{CENT_CD}-->
+	<include refid="CMM.PAGING_TAIL"/>
+    </select>
+   
+	<!-- 권한관리 - 권한목록 조회 -->
+	<select id="R_getAuthList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT S.SML_NM, S.SML_CD
+		FROM STT_TBL_CMN_CD_BIG B RIGHT OUTER JOIN STT_TBL_CMN_CD_SML S
+		ON B.BIG_CD = S.BIG_CD
+		WHERE B.BIG_CD = 'AUTH_LV'
+	</select>
+	
+	<!-- 권한관리 - 프로그램목록 조회 -->
+	<select id="R_getPrgmList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+		CASE WHEN B.MNU_ID IN ( SELECT A.MNU_ID 
+		                        FROM TBL_SYS_MNU_AUTH A
+		                        WHERE AUTH_LV = #{AUTH_LV} ) THEN 'Y' ELSE 'N' END AS CHK,
+		B.MNU_ID, B.PARE_MNU_ID, B.MNU_NM, B.MNU_KND
+		FROM TBL_SYS_MNU_INF B
+		WHERE USE_YN = 'Y'
+	</select>
+	
+	<!-- 권한관리 - 프로그램목록 권한 수정 -->
+	<!-- 
+	<update id="U_handlePrgmList" parameterType="java.util.HashMap">
+		UPDATE TBL_SYS_MNU_AUTH
+		SET AUTH_LV = #{AUTH_LV}
+		WHERE MNU_ID = #{MNU_ID}
+	</update>
+	-->
+	
+	<!-- 권한관리 - 프로그램목록 권한 삭제 -->
+	<!-- 
+	<delete id="D_handlePrgmList" parameterType="java.util.HashMap">
+		DELETE
+		FROM TBL_SYS_MNU_AUTH
+		WHERE MNU_ID = #{MNU_ID}
+	</delete>
+	-->
+	
+	<!-- 프로그램목록 권한 어느 하나를 추가함으로써 수정할 때 → AUTH_LV가 같은 모든 MNU_ID를 찾아서 삭제하고 추가하려는 MNU_ID까지 포함하여 INSERT한다.(프로그램ID와 AUTH_LV 두개 합하여 PK) -->
+	<!-- 프로그램목록 권한 어느 하나를 삭제함으로써 수정할 때 → AUTH_LV가 같은 모든 MNU_ID를 찾아서 삭제하고 삭제하려는 MNU_ID만 제외하고(이미 삭제된 상태) INSERT 한다. -->
+	<!-- 권한관리 - 프로그램목록 권한 수정① (프로그램목록 권한 추가, 삭제 후 수정) -->
+	<delete id="D_handlePrgmList" parameterType="java.util.HashMap">
+		DELETE
+		FROM TBL_SYS_MNU_AUTH
+		WHERE AUTH_LV = #{AUTH_LV}
+	</delete>
+	<!-- 권한관리 - 프로그램목록 권한 수정② (프로그램목록 권한 추가, 삭제 후 수정) -->
+	<insert id="C_handlePrgmList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_SYS_MNU_AUTH (MNU_ID, AUTH_LV) 
+		VALUES (#{MNU_ID}, #{AUTH_LV})
+	</insert>
+	
+ </mapper>

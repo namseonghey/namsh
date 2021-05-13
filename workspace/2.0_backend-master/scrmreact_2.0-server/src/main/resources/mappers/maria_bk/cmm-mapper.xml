@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CMM">
+	<!-- procedure resultMap define -->
+	<resultMap id="pResults" type="java.util.HashMap"/>
+	
+	<!-- common page zone start -->
+	<sql id="PAGING_HEAD">
+		<if test="QUERY_PAGING == '1'.toString()">
+	SELECT T.*, COUNT(1) OVER () AS "totalcount"
+	FROM (
+		SELECT A.*
+			, 'r' AS "rowtype"
+			, @rownum:=@rownum+1 AS "recid"
+		FROM (
+		</if>
+	</sql>
+	<sql id="PAGING_TAIL">
+		<if test="QUERY_PAGING == '1'.toString()">
+		LIMIT 999999999
+		) A
+		INNER JOIN (SELECT @ROWNUM := 0) TEP
+	) T
+	ORDER BY T.recid
+	LIMIT #{QUERY_START}, #{QUERY_LIMIT}
+		</if>
+	</sql>
+	<!-- common page zone end -->
+	
+ 	<select id="R_CurrentDateTime" resultType="java.util.HashMap" parameterType="java.util.HashMap">
+		SELECT DATE_FORMAT(NOW(), '%Y%m%d%H%i%s') AS CURRENT_DTM FROM DUAL
+ 	</select>	
+</mapper>

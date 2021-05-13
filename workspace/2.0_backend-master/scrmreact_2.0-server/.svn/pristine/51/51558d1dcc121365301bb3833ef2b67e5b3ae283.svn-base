@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="CMM">
+	<!-- procedure resultMap define -->
+	<resultMap id="pResults" type="java.util.HashMap"/>
+	
+	<!-- common page zone start -->
+	<sql id="PAGING_HEAD">
+		<if test="QUERY_PAGING == '1'.toString()">
+	SELECT	*
+	FROM	(
+		SELECT	ROWNUM AS "recid"
+			,	'r' AS "rowtype"
+			,	A.*
+		FROM	(
+		</if>
+	</sql>
+	<sql id="PAGING_TAIL">
+		<if test="QUERY_PAGING == '1'.toString()">
+		) A
+		WHERE	ROWNUM <![CDATA[<=]]> (#{QUERY_LIMIT} * #{QUERY_PAGE})
+	)
+	WHERE	"recid" <![CDATA[>]]> #{QUERY_START}
+		</if>
+	</sql>
+	<!-- common page zone end -->
+	
+ 	<select id="R_CurrentDateTime" resultType="java.util.HashMap" parameterType="java.util.HashMap">
+		SELECT TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS') AS CURRENT_DTM FROM DUAL
+ 	</select>	
+</mapper>

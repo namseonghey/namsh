@@ -1,0 +1,27 @@
+package kr.co.itfact.scrm.dao;
+
+
+import org.springframework.stereotype.Component;
+
+import com.itfact.lib.MatchScript;
+
+@Component("MatchScriptDAO")
+public class MatchScriptDAOImpl implements MatchScriptDAO{
+	public MatchScript mScript = MatchScript.getInstance(this.getClass().getResource("/").getPath() + "fwd.user", this.getClass().getResource("/").getPath() + "dic.user");
+	
+	
+	@Override
+	public boolean analysisScript (String snroText, String text, double pCriticalPoint) {
+		
+		boolean pass = mScript.analysisScript(snroText, text, pCriticalPoint);		
+		
+		return pass;
+	}
+
+
+	@Override
+	public String parsDate(String string) {
+		String parsDate =  mScript.parsDate(string);		
+		return parsDate;
+	}
+}

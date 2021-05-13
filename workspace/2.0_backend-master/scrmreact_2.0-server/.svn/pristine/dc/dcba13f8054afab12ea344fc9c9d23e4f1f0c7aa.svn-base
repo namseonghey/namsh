@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="COM">
+	<select id="R_doLogin" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN USR_ID IS NULL THEN 'USR_ID'
+				 WHEN PWD_ERR_CNT <![CDATA[>=]]> (SELECT CASE WHEN A.CNT = '0'
+															  THEN B.STND_VAL
+															  ELSE A.STND_VAL 
+															  END AS STND_VAL
+												  FROM   (
+												          SELECT STND_VAL
+												   	           , COUNT(STND_VAL) AS CNT
+														  FROM   STT_SYS_CENT_SET
+														  WHERE  CENT_CD  = (SELECT CENT_CD FROM STT_USR_LST WHERE USR_ID = #{USR_ID})
+														  AND    STND_CD  = '00002'
+														  AND    APY_FLAG = 'Y'
+														 ) A
+	                                                   , STT_SYS_STND_SET B
+                                                  WHERE  B.STND_CD = '00002'
+                                                 ) THEN 'MAX_ERR'	
+				 WHEN USR_PWD_ENC != #{PWD} THEN 'PWD_ERR'
+				 WHEN PWD_CHG_DTM <![CDATA[<=]]> DATE_SUB(CURRENT_DATE(), INTERVAL (SELECT CASE WHEN A.CNT = '0'
+																						   THEN B.STND_VAL
+																						   ELSE A.STND_VAL 
+																						   END AS STND_VAL
+																			        FROM   (
+																							SELECT STND_VAL
+																							 	 , COUNT(STND_VAL) AS CNT
+																							FROM   STT_SYS_CENT_SET
+																							WHERE  CENT_CD  = (SELECT CENT_CD FROM STT_USR_LST WHERE USR_ID = #{USR_ID})
+																							AND    STND_CD  = '00003'
+																							AND    APY_FLAG = 'Y'
+																						   ) A
+	                                                                                     , STT_SYS_STND_SET B
+                                                                                    WHERE  B.STND_CD = '00003'
+																				   ) DAY) THEN 'INIT'
+				 WHEN PWD_RSET_FLAG  = 'Y' THEN 'INIT'
+				 WHEN LGN_IP != #{G_CONN_IP} THEN 'LOGIN'
+			     ELSE 'Y' END AS RST_CD
+			, CENT_CD
+			, USR_ID
+			, AUTH_LV
+			, TEAM_CD
+			, PWD_ERR_CNT
+		FROM  STT_USR_LST
+		WHERE USR_ID = #{USR_ID}
+	</select>	
+	
+	<update id="U_doLoginAfter" parameterType="java.util.HashMap">		
+		UPDATE STT_USR_LST
+		SET 
+			  LGN_IP      = #{G_CONN_IP}
+			, PWD_ERR_CNT = 0
+			, LGN_DTM     = CURRENT_TIMESTAMP()
+		WHERE USR_ID      = #{USR_ID}			
+	</update>
+	
+	<select id="R_getUserInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.USR_ID
+			 , A.CENT_CD
+			 , FC_STT_GET_CENT_NM(A.CENT_CD) AS CENT_NM
+			 , A.TEAM_CD
+			 , FC_STT_GET_TEAM_NM(A.CENT_CD, A.TEAM_CD) AS TEAM_NM
+			 , A.AUTH_LV
+			 , A.USR_NM
+			 , A.LGN_IP
+			 , DATE_FORMAT(CURRENT_DATE(), '%Y%m%d') AS LOGIN_DT
+			 , A.USE_FLAG
+		FROM   STT_USR_LST A		
+		WHERE  A.USR_ID = #{USR_ID}
+	</select>
+	
+	<select id="R_getCommCode" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT B.LAG_CD
+			 , B.MDM_CD
+			 , B.SML_CD AS CODE
+			 , B.SML_NM AS CODE_NM
+			 , B.CD_VAL AS CD_VAL
+		FROM   STT_SYS_CMN_CD_LAG A
+		INNER JOIN STT_SYS_CMN_CD_SML B
+		ON (A.LAG_CD = B.LAG_CD AND A.MDM_CD = B.MDM_CD)
+		WHERE  A.USE_FLAG = 'Y'
+		AND    B.USE_FLAG = 'Y'
+		ORDER BY A.LAG_CD, B.SORT_ORD
+	</select>
+	
+	<select id="R_getMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.MNU_ID
+			 , A.MNU_NM
+			 , A.PARE_MNU_ID
+			 , A.SORT_ORD
+			 , A.USE_FLAG
+			 , A.PGM_PATH
+			 , A.MNU_TP
+		FROM   STT_SYS_MNU A
+		INNER JOIN STT_SYS_MNU_AUTH B
+		ON (A.MNU_ID = B.MNU_ID AND B.AUTH_LV = #{AUTH_LV})
+		WHERE A.USE_FLAG = 'Y'
+		ORDER BY A.SORT_ORD
+	</select>
+	
+	<select id="R_getConstList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CENT_CD
+			 , TEAM_CD
+			 , CONST_CD AS CODE
+			 , CONST_NM AS CODE_NM
+		FROM   STT_SYS_CONST
+		WHERE  USE_FLAG = 'Y'
+		ORDER BY CONST_NM
+	</select>
+	
+	
+	<select id="R_getCentStndList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT B.CENT_CD
+			 , A.STND_CD
+			 , A.STND_CD_NM
+			 , B.APY_FLAG
+			 , CASE WHEN B.APY_FLAG = 'Y' THEN B.STND_VAL
+			        ELSE A.STND_VAL
+			        END  AS STND_VAL
+			 , B.ETC1
+			 , B.ETC2
+		FROM STT_SYS_STND_SET A
+		LEFT OUTER JOIN STT_SYS_CENT_SET B
+		ON (A.STND_CD = B.STND_CD AND B.CENT_CD = #{CENT_CD})
+		WHERE A.USE_FLAG = 'Y'
+	</select>
+	
+	<select id="R_getCentList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			   CENT_CD    AS CODE
+			 , CENT_NM    AS CODE_NM
+			 , BIZ_PSB_FLAG
+			 , #{AUTH_LV} AS AUTH_LV
+		FROM   STT_SYS_CENT
+		WHERE  USE_FLAG = 'Y'
+		<if test="AUTH_LV != '1'.toString() and AUTH_LV != '2'.toString()">
+		AND    CENT_CD = #{CENT_CD}
+		</if>
+	</select>
+		
+	<select id="R_getTeamList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			   CENT_CD AS CENT_CD
+			 , TEAM_CD AS CODE
+			 , TEAM_NM AS CODE_NM
+		FROM   STT_SYS_TEAM
+		WHERE  USE_FLAG = 'Y'
+		<if test="AUTH_LV == '3'.toString()">
+		AND    TEAM_CD = #{TEAM_CD}
+		</if>
+	</select>
+	
+	<select id="R_getUserList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			   CENT_CD
+			 , TEAM_CD
+			 , USR_ID AS CODE
+			 , USR_NM AS CODE_NM
+			 , AUTH_LV
+		FROM   STT_USR_LST
+		WHERE  USE_FLAG = 'Y'
+		<if test="AUTH_LV == '3'.toString()">
+		AND    USR_ID = #{USR_ID}
+		</if>
+	</select>
+	
+	<select id="R_getMsgList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT MSG_CD
+			 , MSG_CONT
+		FROM   STT_SYS_CMN_MSG_CD
+		WHERE  USE_FLAG = 'Y'
+	</select>
+	
+	<delete id="D_delLogoutInfo" parameterType="java.util.HashMap">
+		DELETE FROM TBL_SYS_LGN
+		WHERE  USR_CD = #{G_USR_CD}
+	</delete>
+			
+	<update id="U_setLogoutInfo" parameterType="java.util.HashMap">
+		UPDATE STT_USR_LST
+		SET    LGN_IP  = null
+		     , LGN_DTM = null
+		WHERE  USR_ID  = #{USR_ID}
+	</update>		
+	
+	<update id="U_addPwdErrCnt" parameterType="java.util.HashMap">
+		UPDATE STT_USR_LST
+		SET    PWD_ERR_CNT = PWD_ERR_CNT + 1
+		WHERE  USR_ID = #{USR_ID}
+	</update>
+	
+	<update id="U_initPwdErrCnt" parameterType="java.util.HashMap">
+		UPDATE STT_USR_LST
+		SET    PWD_ERR_CNT = 0
+		WHERE  USR_ID = #{USR_ID}
+	</update>
+	
+	<select id="R_chkCurUsrPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">		
+		SELECT CASE WHEN MAX(USR_PWD_ENC) IS NULL THEN 'USR'
+			        WHEN MAX(USR_PWD_ENC) = #{CUR_PWD} THEN 'Y' 
+			        ELSE 'N' 
+			        END  AS MAT_YN
+		FROM   STT_USR_LST
+		WHERE  USR_ID = #{USR_ID}
+	</select>
+	
+	<select id="R_chkNewPwd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CASE WHEN MAX(USR_PWD_ENC) IS NULL THEN 'N' 
+		            ELSE 'Y' 
+		            END AS DUP_YN
+		FROM   STT_USR_LOG
+		WHERE  USR_PWD_ENC = #{NEW_PWD}
+		AND    USR_ID = #{USR_ID}
+		AND    PWD_CHG_DTM <![CDATA[>]]> PERIOD_ADD(NOW(), -6)
+	</select>		
+	
+	<update id="U_setUsrPwd" parameterType="java.util.HashMap">
+		UPDATE STT_USR_LST
+		SET    USR_PWD_ENC = #{NEW_PWD}
+		     , PWD_CHG_DTM = CURRENT_TIMESTAMP()
+		     , PWD_ERR_CNT = 0
+		     , CHG_USR_ID  = #{USR_ID}
+		     , CHG_DTM     = CURRENT_TIMESTAMP()
+		     , PWD_RSET_FLAG = 'N'
+		WHERE  USR_ID      = #{USR_ID}
+	</update>	
+	
+	<select id="R_getUserListTEST" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT
+			CENT_CD, TEAM_CD, USR_CD, USR_NM AS ENC_USR_NM, AUTH_LV, BIZ_PSB_YN, USE_YN
+		FROM TBL_TMP_TEST
+		ORDER BY CENT_CD, USR_CD
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<update id="U_handleTEST" parameterType="java.util.HashMap">
+		UPDATE TBL_TMP_TEST
+		SET USR_NM = #{ENC_USR_NM}
+			, AUTH_LV = #{AUTH_LV}
+			, BIZ_PSB_YN = #{BIZ_PSB_YN}
+			, USE_YN = #{USE_YN}
+		WHERE USR_CD = #{USR_CD}
+	</update>
+	
+	<insert id="C_handleTEST" parameterType="java.util.HashMap">
+		INSERT INTO TBL_TMP_TEST (
+			CENT_CD, TEAM_CD, USR_CD, USR_NM, AUTH_LV, BIZ_PSB_YN, USE_YN
+		) VALUES (
+			#{CENT_CD}, #{TEAM_CD}, #{USR_CD}, #{ENC_USR_NM}, #{AUTH_LV}, #{BIZ_PSB_YN}, #{USE_YN}
+		)
+	</insert>
+	
+	<delete id="D_handleTEST" parameterType="java.util.HashMap">
+		DELETE FROM TBL_TMP_TEST
+		WHERE USR_CD = #{ORG_USR_CD}
+	</delete>
+	
+	<select id="R_getUserListTESTCnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT COUNT(1) AS CNT
+		FROM TBL_TMP_TEST
+	</select>
+	
+	
+	<!-- 서버 리스트 -->
+	<select id="R_getSrvList" parameterType="java.util.HashMap" resultType="java.util.HashMap">		
+		SELECT A.NAME
+			 , A.VALUE            
+		FROM  (SELECT SVR_HST AS "NAME"
+					, SVR_HST AS "VALUE" 
+			   FROM   STT_SYS_SVR
+			   WHERE  USE_FLAG = 'Y') A
+        ORDER BY A.NAME
+	</select>	
+		
+	<!-- 서버 작업 통계 -->	
+	<select id="R_getSrvJobStatistic" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	    	SELECT "JOB_TP" AS SECT, JOB_TP AS TP
+		    ,      FC_STT_GET_CMN_CD('CMN', 'JOB_TP', JOB_TP) AS TP_CONT
+		    ,      IFNULL(SUM(TOT_CNT),0) AS TOT_CNT
+		    ,      IFNULL(SUM(REC_TM),0) AS REC_TM
+		    ,      IFNULL(ROUND(SUM(FILE_SIZE / 1024.0 / 1024.0),2),0) AS FILE_SIZE_GB
+		    ,      IFNULL(SUM(SUCC_CNT),0) AS SUCC_CNT
+		    ,      IFNULL(SUM(FAIL_CNT),0) AS FAIL_CNT
+		    ,      IFNULL(ROUND(SUM(SUCC_CNT)/SUM(TOT_CNT)*100,2),0) AS SUCC_PER
+		    ,      IFNULL(ROUND(SUM(FAIL_CNT)/SUM(TOT_CNT)*100,2),0) AS FAIL_PER
+		    FROM   STT_JOB_STATIS_DAY
+		    WHERE  UPPER(SVR_HST) NOT LIKE 'DEFAULT%'
+		    <if test="SVR_HST != '' and SVR_HST != null">
+			AND    UPPER(SVR_HST) = UPPER(#{SVR_HST})
+			</if>
+		    AND    REG_TM LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),'%')
+		    GROUP  BY JOB_TP
+		    UNION
+		    SELECT "CALL_TP" AS SECT, CALL_TP AS TP
+		    ,      FC_STT_GET_CMN_CD('CMN', 'CALL_TP', CALL_TP) AS TP_CONT
+		    ,      IFNULL(SUM(TOT_CNT),0) AS TOT_CNT
+		    ,      IFNULL(SUM(REC_TM),0) AS REC_TM
+		    ,      IFNULL(ROUND(SUM(FILE_SIZE / 1024.0 / 1024.0),2),0) AS FILE_SIZE_GB
+		    ,      IFNULL(SUM(SUCC_CNT),0) AS SUCC_CNT
+		    ,      IFNULL(SUM(FAIL_CNT),0) AS FAIL_CNT
+		    ,      IFNULL(ROUND(SUM(SUCC_CNT)/SUM(TOT_CNT)*100,2),0) AS SUCC_PER
+		    ,      IFNULL(ROUND(SUM(FAIL_CNT)/SUM(TOT_CNT)*100,2),0) AS FAIL_PER
+		    FROM   STT_JOB_STATIS_DAY
+		    WHERE  UPPER(SVR_HST) NOT LIKE 'DEFAULT%'
+		    <if test="SVR_HST != '' and SVR_HST != null">
+			AND    UPPER(SVR_HST) = UPPER(#{SVR_HST})
+			</if>
+		    AND    REG_TM LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),'%')
+		    GROUP  BY CALL_TP
+		    UNION
+		    SELECT "ALL" AS SECT, "ALL" AS TP
+		    ,      'ALL' AS TP_CONT
+		    ,      IFNULL(SUM(TOT_CNT),0) AS TOT_CNT
+		    ,      IFNULL(SUM(REC_TM),0) AS REC_TM
+		    ,      IFNULL(ROUND(SUM(FILE_SIZE / 1024.0 / 1024.0),2),0) AS FILE_SIZE_GB
+		    ,      IFNULL(SUM(SUCC_CNT),0) AS SUCC_CNT
+		    ,      IFNULL(SUM(FAIL_CNT),0) AS FAIL_CNT
+		    ,      IFNULL(ROUND(SUM(SUCC_CNT)/SUM(TOT_CNT)*100,2),0) AS SUCC_PER
+		    ,      IFNULL(ROUND(SUM(FAIL_CNT)/SUM(TOT_CNT)*100,2),0) AS FAIL_PER
+		    FROM   STT_JOB_STATIS_DAY
+		    WHERE  UPPER(SVR_HST) NOT LIKE 'DEFAULT%'
+		    <if test="SVR_HST != '' and SVR_HST != null">
+			AND    UPPER(SVR_HST) = UPPER(#{SVR_HST})
+			</if>
+		    AND    REG_TM LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),'%')
+	</select>
+	
+	<!-- 서버 일일 자원 통계 -->
+	<select id="R_getSrvResourceStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">		
+		SELECT 
+			N.SVR_HST, DATE_FORMAT(N.REG_DTM, '%H:%i:%s') AS REG_DTM, N.CPU, N.MEM, N.IO, N.DISK, N.SWAP
+			, MAC.CPU AS MAX_CPU, DATE_FORMAT(MAC.REG_DTM, '%H:%i:%s') AS MAX_CPU_REG_DTM
+			, MIC.CPU AS MIN_CPU, DATE_FORMAT(MIC.REG_DTM, '%H:%i:%s') AS MIN_CPU_REG_DTM
+			, MAM.MEM AS MAX_MEM, DATE_FORMAT(MAM.REG_DTM, '%H:%i:%s') AS MAX_MEM_REG_DTM
+			, MIM.MEM AS MIN_MEM, DATE_FORMAT(MIM.REG_DTM, '%H:%i:%s') AS MIN_MEM_REG_DTM
+		FROM 
+			STT_RES_STATIS_DAY N
+			JOIN (SELECT SVR_HST, CPU, REG_DTM FROM ( 
+				SELECT SVR_HST, CPU, REG_DTM FROM STT_RES_STATIS_DAY WHERE (SVR_HST, CPU) IN (SELECT SVR_HST, MAX(CPU) AS CPU FROM STT_RES_STATIS_DAY GROUP BY SVR_HST ORDER BY SVR_HST, REG_DTM DESC)
+			) A GROUP BY SVR_HST) MAC
+			ON N.SVR_HST = MAC.SVR_HST
+			JOIN (SELECT SVR_HST, CPU, REG_DTM FROM ( 
+				SELECT SVR_HST, CPU, REG_DTM FROM STT_RES_STATIS_DAY WHERE (SVR_HST, CPU) IN (SELECT SVR_HST, MIN(CPU) AS CPU FROM STT_RES_STATIS_DAY GROUP BY SVR_HST ORDER BY SVR_HST, REG_DTM DESC)
+			) A GROUP BY SVR_HST) MIC
+			ON N.SVR_HST = MIC.SVR_HST
+			JOIN (SELECT SVR_HST, MEM, REG_DTM FROM ( 
+				SELECT SVR_HST, MEM, REG_DTM FROM STT_RES_STATIS_DAY WHERE (SVR_HST, MEM) IN (SELECT SVR_HST, MAX(MEM) AS MEM FROM STT_RES_STATIS_DAY GROUP BY SVR_HST ORDER BY SVR_HST, REG_DTM DESC)
+			) A GROUP BY SVR_HST) MAM
+			ON N.SVR_HST = MAM.SVR_HST
+			JOIN (SELECT SVR_HST, MEM, REG_DTM FROM ( 
+				SELECT SVR_HST, MEM, REG_DTM FROM STT_RES_STATIS_DAY WHERE (SVR_HST, MEM) IN (SELECT SVR_HST, MIN(MEM) AS MEM FROM STT_RES_STATIS_DAY GROUP BY SVR_HST ORDER BY SVR_HST, REG_DTM DESC)
+			) A GROUP BY SVR_HST) MIM
+			ON N.SVR_HST = MIM.SVR_HST
+		WHERE N.REG_DTM IN (select max(REG_DTM) from STT_RES_STATIS_DAY GROUP BY SVR_HST) AND N.SVR_HST = #{SV_NM}
+		GROUP BY N.SVR_HST
+		ORDER BY N.SVR_HST
+	</select>	
+	
+	<select id="R_getSrvJobStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			A.*
+		FROM
+			( SELECT
+				*
+          	  FROM STT_JOB_STATIS_DAY 
+        	  WHERE SUBSTR(REG_TM, 1, 10) = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S')
+        	  ORDER BY SVR_HST , REG_TM DESC
+        	) A
+	</select> 
+	
+	<select id="R_getSrvAllJobStatisticDaily" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT T.SVR_HST
+		,      IFNULL(B.SVR_CONT, T.SVR_HST) AS SVR_CONT
+		,      GROUP_CONCAT(T.TIMELINE ORDER BY T.REG_TM SEPARATOR ',')  AS TIMELINE
+		FROM (
+			SELECT A.SVR_HST, A.REG_TM
+			,      CONCAT(SUBSTR(A.REG_TM, 12) , '=' , A.TOT_CNT) AS TIMELINE
+			FROM (
+				SELECT REG_TM, SVR_HST
+				,      SUM(TOT_CNT) AS TOT_CNT
+				FROM   STT_JOB_STATIS_DAY
+				WHERE  UPPER(SVR_HST) NOT LIKE 'DEFAULT%'
+				<if test="SVR_HST != '' and SVR_HST != null">
+				AND    UPPER(SVR_HST) = UPPER(#{SVR_HST})
+				</if>
+				AND    REG_TM LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),'%')
+				GROUP  BY REG_TM, SVR_HST
+			) A
+			ORDER BY REG_TM ASC
+		) T                
+		LEFT JOIN STT_SYS_SVR B ON ( B.SVR_HST = T.SVR_HST AND B.USE_FLAG = 'Y')
+		GROUP BY T.SVR_HST
+	</select>
+	
+	<select id="R_getSttErr" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT COUNT(A.ERR_CD) AS ERR_CNT
+		     , A.ERR_CD
+		     , A.ERR_MSG
+		FROM (
+				SELECT E.ERR_CD, IFNULL(C.SML_NM, E.ERR_CD) AS ERR_MSG
+				FROM   STT_JOB_ERR E
+				LEFT JOIN V_STT_SYS_CMN_CD C ON E.ERR_CD = C.SML_CD AND C.LAG_CD = 'STT_JOB_INFO' AND C.MDM_CD = 'ERR_CD'
+				WHERE  UPPER(E.SVR_HST) NOT LIKE 'DEFAULT%'
+				AND    REG_DTM LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'),'%')    
+				<if test="SVR_HST != '' and SVR_HST != null">
+				AND    UPPER(E.SVR_HST) = UPPER(#{SVR_HST})
+				</if>) A
+		GROUP BY A.ERR_CD
+	</select>
+	
+</mapper>

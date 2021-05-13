@@ -1,0 +1,167 @@
+package kr.co.itfact.scrm.json.controller;
+
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map.Entry;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import kr.co.itfact.scrm.dao.MatchScriptDAO;
+import kr.co.itfact.scrm.common.DefaultConstants;
+import kr.co.itfact.scrm.dao.DefaultDAO;
+import kr.co.itfact.scrm.json.common.ResponseServiceImpl;
+import kr.co.itfact.scrm.json.dataset.ConfigDataSet;
+import kr.co.itfact.scrm.json.service.DefaultService;
+import kr.co.itfact.scrm.json.vo.DefaultVO;
+
+@RestController
+@EnableWebMvc
+public class CallBotController {
+	private final Logger logger = LoggerFactory.getLogger(CallBotController.class);
+	
+	@Autowired
+	@Qualifier("primaryDAO")
+	private DefaultDAO daoPrimary;
+	
+	@Autowired
+	private ResponseServiceImpl responseService;
+	
+	@Autowired
+	private MatchScriptDAO mScript;
+	
+	@RequestMapping(value = "/callbot.service.do", method = {RequestMethod.POST})
+	//public void recvResource(HttpServletRequest request, HttpServletResponse response, @RequestParam("TGT_SEQ") int tgt_seq, @RequestParam("text") String text) throws Exception {
+	public void recvResource(HttpServletRequest request, HttpServletResponse response,  @RequestBody String transdata )throws Exception {
+
+		request.setAttribute("transdata", transdata);
+
+//		logger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@callbot.service.do parameterbody :: " + transdata);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		
+		HashMap<String, Object> transdataMap = (HashMap<String, Object>)(mapper.readValue(transdata, HashMap.class)).get("transdata");
+				
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do transdataMap :: " + transdataMap);
+		
+		HashMap<String, Object> requestDataSet = (HashMap<String, Object>) transdataMap.get("requestDataSet");
+
+		String TGT_SEQ = (String) requestDataSet.get("TGT_SEQ");
+		String SNRO_TP_CD = (String) requestDataSet.get("SNRO_TP_CD");
+		String SNRO_CONT = (String) requestDataSet.get("SNRO_CONT");
+		
+		String SNRO_CMB_TEXT = (String) requestDataSet.get("SNRO_CMB_TEXT");
+		String CHG_CHAR_FOM_TP_CD = (String) requestDataSet.get("CHG_CHAR_FOM_TP_CD");
+		String parsedDate = "";
+		if (SNRO_TP_CD.equals("2") || SNRO_TP_CD.equals("3")) {
+			parsedDate = mScript.parsDate(SNRO_CONT);
+//			logger.debug("@@@@@@@@@@@@@@@@@ parsedDate           :: " + parsedDate);
+			
+		}
+		
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do TGT_SEQ            :: " + TGT_SEQ);
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do SNRO_TP_CD         :: " + SNRO_TP_CD);
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do SNRO_CONT          :: " + SNRO_CONT);
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do SNRO_CMB_TEXT      :: " + SNRO_CMB_TEXT);
+//		logger.debug("@@@@@@@@@@@@@@@@@callbot.service.do CHG_CHAR_FOM_TP_CD :: " + CHG_CHAR_FOM_TP_CD);
+//				
+//		System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+//		System.out.println("transdataMap :: " + transdataMap);
+		
+		HashMap<String, Object> srchParam = new HashMap<String, Object>();
+		HashMap<String, Object> responseDataSet = new HashMap<String, Object>();
+		String result = "";
+		
+		// 최초 진입 시, 타겟은 무조건 0
+		srchParam.put("TGT_SEQ", TGT_SEQ);
+
+		srchParam.put("G_SYS_DV", "L");
+		
+		try {
+			List<HashMap<String, Object>> snroInfo = daoPrimary.serviceRead("COM.R_srchSnroInfo", srchParam);
+			for (int intA=0; intA < snroInfo.size(); intA++) {
+				// 시나리오 데이터 검색 로직
+				String snroText = snroInfo.get(intA).get("SNRO_CONT").toString();
+				String ansCont  = "";
+				boolean pass = false;
+				
+				if (SNRO_TP_CD.equals("2") || SNRO_TP_CD.equals("3")) {
+					snroText = snroText.replace("{조합문자}", parsedDate);
+				}
+				
+				
+				pass = mScript.analysisScript(snroText, SNRO_CONT, 70);
+//				logger.debug("시나리오 : " + snroText);
+//				logger.debug("pass : " + pass);
+				
+				if (pass == true) {
+					ansCont = snroInfo.get(intA).get("ANS_CONT").toString();
+					
+					if (!SNRO_CMB_TEXT.equals("")) {
+						ansCont = ansCont.replace("{조합문자}", SNRO_CMB_TEXT);
+						
+					} else if (!parsedDate.equals("")) {
+						ansCont = ansCont.replace("{조합문자}", parsedDate);
+						
+					}
+				}
+
+				try {
+					if (pass) {
+						responseDataSet.put("TGT_SEQ", snroInfo.get(intA).get("SEQ_NO").toString());
+						responseDataSet.put("ANS_CONT", ansCont);
+						responseDataSet.put("SNRO_CMB_TEXT", parsedDate);
+						responseDataSet.put("ERR_CODE", "01");
+						responseDataSet.put("ERR_MESSAGE", "");
+						break;
+					}
+				} catch (Exception e) {
+					logger.error("[ERROR] CallBotController handler Exception ::: snroSearch error");
+					responseDataSet.put("ERR_CODE", "02");
+					responseDataSet.put("ERR_MESSAGE", e.getMessage());
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("[ERROR] CallBotController handler Exception ::: snroData error ");
+			responseDataSet.put("ERR_CODE", "02");
+			responseDataSet.put("ERR_MESSAGE", e.getMessage());
+		} finally {
+			logger.debug("responseDataSet : " + responseDataSet);
+					
+			if (responseDataSet.size() > 0) {
+				result = mapper.writeValueAsString(responseDataSet);
+			} else {
+				responseDataSet.put("ERR_CODE", "03");
+				responseDataSet.put("ERR_MESSAGE", "NoSnroFound");
+				
+				List<HashMap<String, Object>> defaultsnroInfo = daoPrimary.serviceRead("COM.R_srchSnroInfoDefualt", srchParam);
+				
+				responseDataSet.put("ANS_CONT", defaultsnroInfo.get(0).get("ANS_CONT").toString());
+				
+				result = mapper.writeValueAsString(responseDataSet);
+			}			
+			
+			transdataMap.put("responseDataSet", result);
+			transdataMap.put("requestDataSet", mapper.writeValueAsString(requestDataSet));
+			
+//			logger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@ final transdataMap : " + transdataMap.toString().replaceAll("\\=",":").replaceAll("requestDataSet","\"requestDataSet\"").replaceAll("responseDataSet","\"responseDataSet\"").getClass().getName());
+//			logger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@ final transdataMap : " + transdataMap.toString().replaceAll("\\=",":").replaceAll("requestDataSet","\"requestDataSet\"").replaceAll("responseDataSet","\"responseDataSet\""));
+											
+			responseService.response(response, transdataMap.toString().replaceAll("\\=",":").replaceAll("requestDataSet","\"requestDataSet\"").replaceAll("responseDataSet","\"responseDataSet\""));
+		}
+	}
+}

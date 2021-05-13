@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="STT">
+	 
+	<select id="R_getKeywordList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT			
+			KEY_WORD
+			, KEY_TYPE
+			, SFTM_GET_USER_NAME(USR_CD) AS USR_CD
+			, DATE_FORMAT(REG_DTM , '%Y-%m-%d %H:%i:%s') AS REG_DTM
+			, USE_YN
+		FROM STT_TBL_KEYWORD
+		WHERE 1=1		
+		  <if test="(startDate != null and startDate != '') and (endDate != null and endDate != '')">		  	
+		      AND DATE_FORMAT(REG_DTM,'%Y-%m-%d') <![CDATA[>=]]> DATE_FORMAT(#{startDate},'%Y-%m-%d')
+		      AND DATE_FORMAT(REG_DTM,'%Y-%m-%d') <![CDATA[<=]]>  DATE_FORMAT(#{endDate},'%Y-%m-%d')
+		  </if>
+		  <if test="KEY_TYPE != null and KEY_TYPE != '' and KEY_TYPE != 'ALL'">
+			  AND KEY_TYPE = #{KEY_TYPE}			  
+		  </if>
+			  ORDER BY REG_DTM DESC
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<insert id="C_handleKeyword" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_KEYWORD (
+			 KEY_WORD, KEY_TYPE, USR_CD, REG_DTM, USE_YN
+		) VALUES (
+			#{KEY_WORD}, #{KEY_TYPE}, SFTM_GET_USER_CD(#{USR_CD}), DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s'), #{USE_YN}
+		)
+	</insert>
+	
+	<update id="U_handleKeyword" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_KEYWORD
+		SET 
+			KEY_WORD = #{KEY_WORD}
+			,KEY_TYPE = #{KEY_TYPE}
+			,CHG_DTM = DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s')
+			,USR_CD = #{USR_CD}
+			,USE_YN = #{USE_YN}	
+		<choose>
+			<when test="OLD_KEY_WORD != null and OLD_KEY_WORD != ''">
+				WHERE KEY_WORD = #{OLD_KEY_WORD}
+			</when>
+			<otherwise>
+				WHERE KEY_WORD = #{KEY_WORD}
+			</otherwise>
+		</choose>
+			
+	</update>
+	<!-- <select id="R_getSttJobData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CALL_ID, RCD_TP, TEXT, REG_DTM FROM STT_TBL_JOB_DATA WHERE CALL_ID = #{CALL_ID}
+	</select> -->
+	<select id="R_getSttJobData" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			A.CALL_ID
+		,	A.RCD_TP
+		,	A.PATH_NM
+		,	A.REC_LENGTH
+		,	B.TEXT
+		FROM STT_TBL_JOB_INFO A 
+		INNER JOIN STT_TBL_JOB_DATA B ON A.CALL_ID = B.CALL_ID
+		WHERE A.CALL_ID = #{CALL_ID}
+		AND A.STATE = 'Y'
+	</select>
+	<select id="R_CtrCallList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			DATE_FORMAT(A.CALL_STRT_DTM, '%Y-%m-%d %H:%i:%s') AS CALL_STRT_DTM
+		,	A.CUS_NM
+		,	A.CALL_ID
+		,	A.CTR_NO
+		,	A.CTR_DT
+		,	SEC_TO_TIME(B.REC_LENGTH) AS CALL_TM
+		FROM TBL_CNS_CALL_SP A
+		INNER JOIN STT_TBL_JOB_INFO B ON B.CALL_ID = A.CALL_ID AND B.STATE = 'Y'
+		WHERE A.CTR_NO = #{CTR_NO}
+		ORDER BY A.CALL_STRT_DTM DESC
+	</select>
+	<select id="R_getSelfCallInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CALL_ID, RCD_TP, PATH_NM, FILE_NM, REC_LENGTH FROM STT_TBL_JOB_SELF_INFO WHERE CALL_ID = #{CALL_ID}
+	</select>
+	<select id="R_Keyword" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			KEY_WORD
+		,	KEY_TYPE
+		FROM STT_TBL_KEYWORD
+		ORDER BY REG_DTM DESC 
+	</select>
+	
+	<!-- STT 수동 요청 적용 대상 평가표(Option) -->
+	<select id="R_getVlaBrdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT
+			VLA_BRD_CD AS value
+			, VLA_BRD_NM AS name
+		FROM TBL_APP_QA_VLA_BRD_INF
+		WHERE USE_YN = 'Y'	
+	</select>
+	
+	<!-- 보완콜 업로드 대상 평가표 조회 -->	
+	<select id="R_getExistsBrdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CTR_NO
+		FROM TBL_APP_QA_VLA_RST
+        WHERE CTR_NO IN
+        <foreach collection="dsExistsBrdInfo" item="item" open="(" separator="," close=")">
+         #{item.CTR_NO}
+        </foreach>
+		AND VLA_BRD_CD IS NOT NULL
+	</select>
+	
+	<select id="R_getExistsVlaBrdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT 
+			DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d') AS STT_TRSM_DTM
+		FROM TBL_APP_QA_VLA_STN_SCRT SCRT
+		INNER JOIN TBL_APP_QA_VLA_BRD_INF INF
+		ON (SCRT.VLA_BRD_CD = INF.VLA_BRD_CD AND SCRT.VLA_BRD_VERS = INF.VLA_BRD_VERS)				                            
+		WHERE INF.USE_YN = 'Y'
+		<if test="VLA_BRD_CD != null and VLA_BRD_CD != ''">
+		AND INF.VLA_BRD_CD = #{VLA_BRD_CD}
+		</if>
+		ORDER BY SCRT.VLA_BRD_VERS LIMIT 1
+	</select>
+	<!-- STT 수동요청 조회 -->
+	<select id="R_SelfJobHistory" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+		WITH CTABLE1 AS(
+			SELECT 
+				COUNT(CALL_ID) AS CNT_N
+				, SELF_JOB_NO		
+				FROM STT_TBL_JOB_INFO
+				WHERE SELF_JOB_NO IS NOT NULL AND STATE = 'N'
+				GROUP BY SELF_JOB_NO, STATE
+		), CTABLE2 AS (
+			SELECT 
+				COUNT(CALL_ID) AS CNT_U
+				, SELF_JOB_NO		
+				FROM STT_TBL_JOB_INFO
+				WHERE SELF_JOB_NO IS NOT NULL AND STATE = 'U'
+				GROUP BY SELF_JOB_NO, STATE
+		), CTABLE3 AS (
+			SELECT 
+				COUNT(CALL_ID) AS CNT_Y
+				, SELF_JOB_NO		
+				FROM STT_TBL_JOB_INFO
+				WHERE SELF_JOB_NO IS NOT NULL AND STATE = 'Y'
+				GROUP BY SELF_JOB_NO, STATE
+		), CTABLE4 AS (
+			SELECT 
+				COUNT(CALL_ID) AS CNT_X
+				, SELF_JOB_NO		
+				FROM STT_TBL_JOB_INFO
+				WHERE SELF_JOB_NO IS NOT NULL AND STATE = 'X'
+				GROUP BY SELF_JOB_NO, STATE
+		)
+
+
+		SELECT 
+			REQ_CNT
+			, REG_DT
+			, REQ_USR_NM
+			, REG_USR_CD
+			, CNT1
+			, CNT2
+			, CNT3
+			, CNT4
+			FROM (
+				SELECT 
+					COUNT(INFO.CALL_ID) AS REQ_CNT
+					, CONCAT(SUBSTR(INFO.SELF_JOB_NO FROM 1 FOR 4), '-'
+							, SUBSTR(INFO.SELF_JOB_NO FROM 5 FOR 2), '-' 
+							, SUBSTR(INFO.SELF_JOB_NO FROM 7 FOR 2), ' ' 
+							, SUBSTR(INFO.SELF_JOB_NO FROM 9 FOR 2), ':' 
+							, SUBSTR(INFO.SELF_JOB_NO FROM 11 FOR 2), ':' 
+							, SUBSTR(INFO.SELF_JOB_NO FROM 13 FOR 2)
+					) AS REG_DT
+					, SFTM_GET_USER_NAME(INFO.REG_USR_CD) AS REQ_USR_NM
+					, INFO.REG_USR_CD
+					, IFNULL(CT1.CNT_N, 0) AS CNT1
+					, IFNULL(CT2.CNT_U, 0) AS CNT2
+					, IFNULL(CT3.CNT_Y, 0) AS CNT3
+					, IFNULL(CT4.CNT_X, 0) AS CNT4
+					FROM STT_TBL_JOB_INFO INFO
+					LEFT OUTER JOIN CTABLE1 CT1
+					ON     (CT1.SELF_JOB_NO    = INFO.SELF_JOB_NO)
+					LEFT OUTER JOIN CTABLE2 CT2
+					ON     (CT2.SELF_JOB_NO    = INFO.SELF_JOB_NO)
+					LEFT OUTER JOIN CTABLE3 CT3
+					ON     (CT3.SELF_JOB_NO    = INFO.SELF_JOB_NO)
+					LEFT OUTER JOIN CTABLE4 CT4
+					ON     (CT4.SELF_JOB_NO    = INFO.SELF_JOB_NO)
+					WHERE DATE_FORMAT(INFO.REG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+					  <if test="REQ_USR != null and REQ_USR != ''">
+						  AND INFO.REG_USR_CD = #{REQ_USR}
+					  </if>				  				  			
+					GROUP BY INFO.SELF_JOB_NO
+			) RESULT
+			ORDER BY RESULT.REG_DT DESC
+
+	</select>
+
+
+	<!-- 고객번호 채번 -->
+	<update id="U_SetCusNo"  parameterType="java.util.HashMap" statementType="CALLABLE">	
+		{
+			CALL SP_SET_CNS_CUS_NO(#{CUS_NM}, #{CUS_TELL_NO}, #{RECEIVER})
+		}
+	</update>	
+
+	<!-- 통화이력 Insert -->
+	<insert id="C_CnsCallSp"  parameterType="java.util.HashMap">	
+
+		INSERT IGNORE INTO TBL_CNS_CALL_SP
+		(
+			CENT_CD
+			,TEAM_CD
+			,USR_CD
+			,CUS_MNGNO
+			,CUS_NM
+			,TEL_NO
+			,CALL_STRT_DTM
+			,REC_FILE_PATH
+			,REC_FILE_NM
+			,CALL_ID
+			,CTR_NO
+			,CTR_DT
+			,REG_ID
+			,REG_DTM
+		)
+		VALUES (
+			(SELECT CENT_CD FROM STT_TBL_USR WHERE USR_NM = #{RECEIVER})
+			,(SELECT TEAM_CD FROM STT_TBL_USR WHERE USR_NM = #{RECEIVER})
+			,SFTM_GET_USER_CD(#{RECEIVER})
+			,(SELECT CUS_MNGNO FROM TBL_CNS_CUS_NO_NUMNG 
+						 WHERE TEL_NO = #{CUS_TELL_NO} 
+						   AND CUS_NM = #{CUS_NM}
+						   AND CENT_CD = (SELECT CENT_CD FROM STT_TBL_USR WHERE USR_NM = #{RECEIVER} )
+		    )
+			,#{CUS_NM}
+			,#{CUS_TELL_NO}
+			,DATE_FORMAT(CONCAT(#{CALL_YYMMDD}, #{CALL_HHIISS}), '%Y%m%d%H%i%s') 
+			,#{FILE_PATH}
+			,#{FILE_NM}
+			,SFTM_GET_CALL_ID(#{CTR_NO}, #{CUS_TELL_NO}, #{RECEIVER}, #{CUS_NM}, #{CALL_HHIISS})
+			,#{CTR_NO}
+			,SFTM_GET_CTR_DT(#{CTR_NO}, #{CALL_YYMMDD}, #{CUS_TELL_NO}, #{CUS_NM},  #{RECEIVER})
+			,#{G_USR_CD}
+			,NOW()
+		)
+ 
+	</insert>
+
+
+	<!-- STT작업정보 INSERT -->
+	<insert id="C_JobSelfInfo"  parameterType="java.util.HashMap">	
+
+		INSERT INTO STT_TBL_JOB_INFO 
+		(
+			CALL_ID			
+			, REG_USR_CD
+			, SV_NM
+			, CS_CD
+			, PATH_NM
+			, FILE_NM
+			, FILE_SIZE
+			, STATE
+			, SELF_JOB_NO
+			, JOB_DV_CD
+		)
+		VALUES (
+			SFTM_GET_CALL_ID(#{CTR_NO}, #{CUS_TELL_NO}, #{RECEIVER}, #{CUS_NM}, #{CALL_HHIISS})			
+			, #{REG_USR_CD}
+			, #{SERVER_NM}
+			, SFTM_GET_USER_CD(#{RECEIVER})
+			, #{FILE_PATH}
+			, #{FILE_NM}
+			, #{FILE_SIZE}
+			, 'N'
+			, #{JOB_ID}
+			, #{JOB_DV_CD}
+		) 
+		ON DUPLICATE KEY
+			UPDATE 	
+			  RE_CNT  = RE_CNT+ 1
+			, SV_NM   = #{SERVER_NM}
+			, PATH_NM =  #{FILE_PATH}
+			, FILE_NM =  #{FILE_NM}
+			, FILE_SIZE = #{FILE_SIZE}
+	
+	</insert>
+
+
+	<!-- 평가결과 INSERT -->
+	<update id="C_AppQaVlaRst"  parameterType="java.util.HashMap" statementType="CALLABLE">	
+
+		{			
+			CALL SP_SET_QA_VLA_TGT_DATA(#{CUS_NM}, #{CTR_NO}, #{CALL_YYMMDD}, #{CUS_TELL_NO}, #{RECEIVER}, #{VLA_BRD_CD})
+		}
+
+	</update>	
+
+
+	<!-- 평가대상 녹취 정보 INSERT -->
+	<insert id="C_AppQaVlaTgtRecInf"  parameterType="java.util.HashMap">	
+		INSERT IGNORE INTO TBL_APP_QA_VLA_TGT_REC_INF
+			(
+			VLA_TGT_NO
+			,SEQ_NO
+			,CENT_CD
+			,TEAM_CD
+			,USR_CD
+			,CUS_MNGNO
+			,CUS_NM
+			,TEL_NO
+			,CALL_STRT_DTM
+			,TEL_CONN_DTM
+			,REC_FILE_PATH
+			,REC_FILE_NM
+			,CALL_ID
+			,REG_ID
+			,REG_DTM
+			)
+				SELECT  						
+						RST.VLA_TGT_NO
+						,CSP.SEQ_NO
+						,CSP.CENT_CD
+						,CSP.TEAM_CD
+						,CSP.USR_CD
+						,CSP.CUS_MNGNO
+						,CSP.CUS_NM
+						,CSP.TEL_NO   
+						,CSP.CALL_STRT_DTM
+						,CSP.TEL_CONN_DTM
+						,CSP.REC_FILE_PATH
+						,CSP.REC_FILE_NM
+						,CSP.CALL_ID
+						,CSP.REG_ID
+						,CSP.REG_DTM
+				 FROM TBL_CNS_CALL_SP CSP
+				INNER JOIN TBL_APP_QA_VLA_RST RST
+        		ON     (CSP.CTR_NO    = RST.CTR_NO)
+				WHERE CSP.CUS_NM = #{CUS_NM}
+				  AND CSP.CUS_MNGNO = (SELECT CUS_MNGNO 
+				  					 FROM TBL_CNS_CUS_NO_NUMNG 
+				  					WHERE TEL_NO = #{CUS_TELL_NO} 
+				  					  AND CENT_CD = (SELECT CENT_CD FROM STT_TBL_USR WHERE USR_NM = #{RECEIVER} )
+				  					  AND CUS_NM  = #{CUS_NM}
+			  					  )
+				  AND CSP.CALL_STRT_DTM = DATE_FORMAT(CONCAT(#{CALL_YYMMDD}, #{CALL_HHIISS}), '%Y%m%d%H%i%s') 
+				  
+
+
+
+
+	</insert>
+
+
+	<!-- STT 결과조회 -->
+	<select id="R_JobHistory"  parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+		<include refid="CMM.PAGING_HEAD"/>
+
+			
+			SELECT 
+				X.CALL_ID
+				, X.CTR_NO
+				, X.FILE_NM
+				, X.PATH_NM
+				, X.REG_USR_CD
+				, X.REQ_USR_NM
+				, X.STATE
+				, X.ERR_CD
+				, X.REG_DTM
+				, X.CS_CD				
+				, (SELECT CENT_NM FROM TBL_SYS_CENT_INF WHERE CENT_CD = X.CENT_CD) AS CENT_NM
+				, (SELECT TEAM_NM FROM TBL_SYS_TEAM_INF WHERE TEAM_CD = X.TEAM_CD) AS TEAM_NM
+				, X.CS_NM					
+				, X.CENT_CD
+				, X.TEAM_CD
+				, X.CALL_STRT_DTM
+				, X.CUS_NM
+				FROM
+					(SELECT
+						INFO.CALL_ID
+						, SUBSTRING_INDEX(INFO.CALL_ID, '_', 1) AS CTR_NO
+						, INFO.FILE_NM
+						, INFO.PATH_NM
+						, INFO.REG_USR_CD
+						, SFTM_GET_USER_NAME(INFO.REG_USR_CD) AS REQ_USR_NM
+						, INFO.STATE
+						, INFO.ERR_CD
+						, DATE_FORMAT(INFO.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+						, INFO.CS_CD				
+						, (SELECT CENT_CD FROM STT_TBL_USR US WHERE US.USR_CD = INFO.CS_CD) AS CENT_CD
+						, (SELECT TEAM_CD FROM STT_TBL_USR US WHERE US.USR_CD = INFO.CS_CD) AS TEAM_CD	
+						, SFTM_GET_USER_NAME(INFO.CS_CD) AS CS_NM
+						, DATE_FORMAT(CP.CALL_STRT_DTM, '%Y-%m-%d %H:%i:%s') AS CALL_STRT_DTM
+						, CP.CUS_NM AS CUS_NM
+					FROM  STT_TBL_JOB_INFO INFO
+		        	LEFT  JOIN  TBL_CNS_CALL_SP CP
+		    		ON    (INFO.CALL_ID = CP.CALL_ID)
+		    		WHERE CP.SEQ_NO IS NOT NULL
+		    		) X			
+			   WHERE DATE_FORMAT(X.REG_DTM, '%Y%m%d') BETWEEN #{JOB_START_DATE} AND #{JOB_END_DATE}
+
+
+				  <if test="CALL_START_DATE != null and CALL_START_DATE != ''">					  
+					  AND DATE_FORMAT(X.CALL_STRT_DTM, '%Y%m%d') <![CDATA[>=]]> #{CALL_START_DATE} 					  
+				  </if>			   
+				  <if test="CALL_END_DATE != null and CALL_END_DATE != ''">					  
+					  AND DATE_FORMAT(X.CALL_STRT_DTM, '%Y%m%d') <![CDATA[<=]]> #{CALL_END_DATE} 					  
+				  </if>			   
+
+				  <if test="STATE != null and STATE != '' and STATE != 'ALL'">
+					  AND X.STATE = #{STATE}
+				  </if>
+			  	  <if test="CTR_NO != '' and CTR_NO != null">
+	  				  AND CTR_NO LIKE CONCAT(#{CTR_NO},'%') 
+				  </if>
+
+				  <if test="CUS_NM != ''">
+					  AND X.CUS_NM LIKE CONCAT(#{CUS_NM},'%')
+					   
+				  </if>				  				  
+				  <if test="CENT_CD != null and CENT_CD != '' and CENT_CD != 'ALL'">
+					  AND X.CENT_CD = #{CENT_CD}
+				  </if>				  				  				  
+				  <if test="TEAM_CD != null and TEAM_CD != '' and TEAM_CD != 'ALL'">
+					  AND X.TEAM_CD = #{TEAM_CD}
+				  </if>				  				  				  						  
+				  <if test="CS_CD != null and CS_CD != ''">
+					  AND X.CS_CD = #{CS_CD}
+				  </if>	
+			  ORDER BY X.REG_DTM DESC, X.CTR_NO
+
+
+		<include refid="CMM.PAGING_TAIL"/>
+
+
+	</select>
+
+
+
+	<!-- 학습 예정 여부 확인 -->
+	<select id="R_TrainStartChk" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT COUNT(1) AS COUNT
+		FROM STT_TBL_TRAIN
+		WHERE TRN_STATE = 'N'
+	</select>
+	
+	<!-- 현재 학습 진행 여부 확인 -->
+	<select id="R_TrainStateChk" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT
+			CASE WHEN COUNT(*) > 0 THEN 'X' ELSE 'Y' END AS TrainUse_YN
+		FROM STT_TBL_TRAIN
+		WHERE TRN_STATE IN ('N', 'S')
+	</select>
+
+	<!-- 학습 등록 -->
+	<insert id="C_TrainRegist" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_TRAIN (
+			TRN_DTM
+			,TRN_TITLE
+			,TRN_CMP
+			,TRN_SRT
+			,TRN_STATE
+		)
+		VALUES (
+			#{TRN_DTM}
+			,#{TRN_TITLE}
+			,#{TRN_CMP}
+			,#{TRN_SRT}
+			,'N'
+		)
+	</insert>
+	
+	<!-- 학습 목록 삭제 -->
+	<update id="U_TrainDelete" parameterType="java.util.HashMap">
+		UPDATE STT_TBL_TRAIN
+		SET TRN_STATE = 'D'
+		WHERE REG_DTM = #{REG_DTM}
+	</update>
+	
+	<insert id="C_TrainLog" parameterType="java.util.HashMap">
+		<choose>
+			<when test="REG_DTM != null">
+				INSERT INTO STT_TBL_TRAIN_LOG (TRN_DTM, TRN_TITLE, WORK_CD)
+				SELECT TRN_DTM, TRN_TITLE, TRN_STATE AS WORK_CD FROM STT_TBL_TRAIN WHERE REG_DTM = #{REG_DTM}
+			</when>
+			<otherwise>
+				INSERT INTO STT_TBL_TRAIN_LOG (TRN_DTM, TRN_TITLE, WORK_CD) 
+				VALUES ( #{TRN_DTM}, #{TRN_TITLE}, 'N')
+			</otherwise>
+		</choose>
+	</insert>
+
+
+	<!-- 학습 목록 -->
+	<select id="R_TrainList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			TRN_DTM
+			,TRN_TITLE
+			,TRN_STATE
+			,REG_DTM
+		FROM STT_TBL_TRAIN 
+		WHERE TRN_STATE != 'D' 
+		ORDER BY REG_DTM DESC
+	</select>
+
+	<resultMap type="java.util.HashMap" id="trnWordMap">
+		<result property="TRN_CMP" column="TRN_CMP" jdbcType="CLOB" javaType="java.lang.String" />
+		<result property="TRN_SRT" column="TRN_SRT" jdbcType="CLOB" javaType="java.lang.String" />
+	</resultMap>
+	<!-- 선택한 학습 목록 단어 -->
+	<select id="R_TrainWords" parameterType="java.util.HashMap" resultMap="trnWordMap">
+		SELECT TRN_CMP, TRN_SRT
+		FROM STT_TBL_TRAIN 
+		WHERE 
+			TRN_STATE != 'D' 
+			<choose>
+				<when test="REG_DTM == 'MAX'">
+					AND REG_DTM = (SELECT MAX(REG_DTM) FROM STT_TBL_TRAIN WHERE TRN_STATE != 'D')
+				</when>
+				<otherwise>
+					AND REG_DTM = #{REG_DTM}
+				</otherwise>
+			</choose>
+   	</select>
+   	
+   	<resultMap type="java.util.HashMap" id="misDataMap">
+		<result property="TEXT" column="TEXT" jdbcType="CLOB" javaType="java.lang.String" />
+	</resultMap>
+	<!-- 오인식 문장 데이터 -->
+	<select id="R_MisData" resultMap="misDataMap">
+		SELECT TEXT FROM STT_TBL_MIS_DATA ORDER BY REG_DTM DESC
+	</select>
+
+	
+	
+	<!-- 학습 내역 -->
+	<select id="R_TrainHistory" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT 
+			TRN_DTM
+			,TRN_TITLE
+			, CASE 
+	      		WHEN WORK_CD = 'Y' THEN '학습 성공 및 적용'
+		        WHEN WORK_CD = 'F' THEN '학습 실패'
+		        WHEN WORK_CD = 'N' THEN '학습 예정'
+		      	WHEN WORK_CD = 'S' THEN '학습 진행'
+		        WHEN WORK_CD = 'X' THEN '미사용'
+		        WHEN WORK_CD = 'D' THEN '학습 내역 삭제'
+		        ELSE 'NONE'
+		      END AS WORK_CD
+			, REG_DTM
+		FROM STT_TBL_TRAIN_LOG 
+		ORDER BY REG_DTM DESC
+	</select>
+
+
+
+</mapper>

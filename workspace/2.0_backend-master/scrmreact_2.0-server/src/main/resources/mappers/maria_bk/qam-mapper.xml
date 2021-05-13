@@ -1,0 +1,1783 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="QAM">
+
+
+	<!-- 시나리오 조회 -->
+	<select id="R_getSnorList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   SEQ_NO 	    AS ID
+		       , TGT_SEQ_NO     AS PARENT_ID
+		       , BAS_SEQ_NO     AS BAS_PARENT_ID
+		       , TGT_SEQ_NO_ORD AS SORT_ORD
+		       , SNRO_CONT
+		       , SNRO_TP_CD
+		       , CHG_CHAR_FOM_TP_CD
+		       , ANS_CONT
+		       , ANS_TP_CD
+		       , IFS_ID
+		       , USE_YN
+		FROM     TBL_APP_SNRO_MNG
+		WHERE    SEQ_NO != '999999'		
+		<if test="SRC_ITEM_NM != ''">
+		AND		 BAS_SEQ_NO IN (SELECT DISTINCT BAS_SEQ_NO FROM TBL_APP_SNRO_MNG WHERE SNRO_CONT LIKE '%${SRC_ITEM_NM}%')		         
+		</if>
+		<if test="SRC_ITEM_USE != ''">
+		AND      USE_YN = #{SRC_ITEM_USE}
+		</if>		
+		ORDER BY TGT_SEQ_NO_ORD, SEQ_NO, TGT_SEQ_NO
+	</select>
+	
+	<!-- 디폴트 시나리오 조회 -->
+	<select id="R_getSnorDefault" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   SEQ_NO 	    
+		       , TGT_SEQ_NO    
+		       , BAS_SEQ_NO     
+		       , TGT_SEQ_NO_ORD 
+		       , SNRO_CONT
+		       , SNRO_TP_CD
+		       , ANS_CONT
+		       , ANS_TP_CD
+		       , USE_YN
+		FROM     TBL_APP_SNRO_MNG
+		WHERE    SEQ_NO = '999999'
+	</select>
+	
+	
+	<!-- 시나리오 수정 -->
+	<update id="U_setSnorDefault" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_SNRO_MNG
+		SET        
+		        ANS_CONT       = #{ANS_CONT}		      
+		      , CHG_ID         = #{G_USR_CD}
+		      , CHG_DTM        = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')		      
+		WHERE  SEQ_NO = '999999'			
+	</update>
+	
+	<!-- 시나리오 마지막 SEQ_NO 조회 -->
+	<select id="R_getSnorSeqNo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   IFNULL(MAX(SEQ_NO), 0) AS SEQ_NO 
+		FROM     TBL_APP_SNRO_MNG	
+		WHERE    SEQ_NO != '999999'	 	
+	</select>
+	
+	<!-- 시나리오 수정 -->
+	<update id="U_handleSnorList" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_SNRO_MNG
+		SET        
+		        TGT_SEQ_NO     = #{PARENT_ID}	    
+		      , BAS_SEQ_NO     = #{BAS_PARENT_ID}	 
+		      , TGT_SEQ_NO_ORD = #{SORT_ORD}	
+		      , SNRO_CONT      = #{SNRO_CONT}
+		      , SNRO_TP_CD     = #{SNRO_TP_CD}
+		      , CHG_CHAR_FOM_TP_CD = #{CHG_CHAR_FOM_TP_CD}
+		      , ANS_CONT       = #{ANS_CONT}
+		      , ANS_TP_CD      = #{ANS_TP_CD}
+		      , IFS_ID         = #{IFS_ID}
+		      , USE_YN         = #{USE_YN}
+		      , CHG_ID         = #{G_USR_CD}
+		      , CHG_DTM        = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')		      
+		WHERE  SEQ_NO = #{ID}			
+	</update>
+	
+	<!-- 시나리오 추가 -->
+	<insert id="C_handleSnorList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_SNRO_MNG (
+            SEQ_NO
+          , TGT_SEQ_NO     
+          , BAS_SEQ_NO  
+          , TGT_SEQ_NO_ORD 
+          , SNRO_CONT      
+          , SNRO_TP_CD   
+          , CHG_CHAR_FOM_TP_CD 
+          , ANS_CONT       
+          , ANS_TP_CD  
+          , IFS_ID  
+          , USE_YN 
+          , REG_ID         
+          , REG_DTM         
+          , CHG_ID         
+          , CHG_DTM        
+		) VALUES (
+		    #{ID}
+	      , #{PARENT_ID}	    
+          , #{BAS_PARENT_ID}	 
+          , #{SORT_ORD}	
+          , #{SNRO_CONT}
+          , #{SNRO_TP_CD}
+          , #{CHG_CHAR_FOM_TP_CD} 
+          , #{ANS_CONT}
+          , #{ANS_TP_CD}
+          , #{IFS_ID}
+          , #{USE_YN}
+          , #{G_USR_CD}
+          , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')	
+          , #{G_USR_CD}
+          , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')	
+		)
+	</insert>
+	
+	
+	<!-- 시나리오 이력 추가 -->
+	<insert id="C_setSnorListSP" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_SNRO_MNG_SP (
+            SEQ_NO
+          , TGT_SEQ_NO     
+          , BAS_SEQ_NO  
+          , TGT_SEQ_NO_ORD 
+          , SNRO_CONT      
+          , SNRO_TP_CD   
+          , CHG_CHAR_FOM_TP_CD   
+          , ANS_CONT       
+          , ANS_TP_CD 
+          , IFS_ID       
+          , USE_YN 
+          , REG_ID         
+          , REG_DTM         
+          , CHG_ID         
+          , CHG_DTM        
+		) VALUES (
+		    #{ID}
+	      , #{PARENT_ID}	    
+          , #{BAS_PARENT_ID}	 
+          , #{SORT_ORD}	
+          , #{SNRO_CONT}
+          , #{SNRO_TP_CD}
+          , #{CHG_CHAR_FOM_TP_CD} 
+          , #{ANS_CONT}
+          , #{ANS_TP_CD}
+          , #{IFS_ID}
+          , #{USE_YN}
+          , #{G_USR_CD}
+          , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')	
+          , #{G_USR_CD}
+          , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')	
+		)
+	</insert>
+	
+	<!-- 평가 항목 조회 -->
+	<select id="R_getVlaItem" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   VLA_ITM_CD
+		       , VLA_ITM_NM
+		       , USE_YN
+		       , SORT_ORD
+		FROM     TBL_APP_QA_VLA_ITM_INF I
+		<where>
+			<if test="SRC_ITEM_NM != ''">
+		         VLA_ITM_NM LIKE '%${SRC_ITEM_NM}%'
+			</if>
+			<if test="SRC_ITEM_USE != ''">
+		AND      USE_YN = #{SRC_ITEM_USE}
+			</if>
+		</where>
+		ORDER BY SORT_ORD
+	</select>
+	
+	<!-- 평가 항목 코드 조회 -->
+	<select id="R_getVlaItemCd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT SFTM_CREATE_VLA_ITM_CD(DATE_FORMAT(now(), '%Y')) AS VLA_ITM_CD
+	</select>
+	
+	<!-- 평가 내용 코드 조회 -->
+	<select id="R_getVlaContCd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT SFTM_CREATE_VLA_CONT_CD(DATE_FORMAT(now(), '%Y')) AS VLA_CONT_CD
+	</select>
+
+	<!-- 평가 내용 코드 조회 -->
+	<select id="R_getVlaStndCd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT SFTM_CREATE_VLA_STND_CD(DATE_FORMAT(NOW(), '%Y')) AS VLA_STND_CD
+	</select>
+	
+	<!-- 평가 항목 추가 -->
+	<insert id="C_handleVlaItemList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_ITM_INF (
+				 VLA_ITM_CD
+		       , VLA_ITM_NM
+		       , USE_YN
+		       , SORT_ORD
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}
+		       , #{VLA_ITM_NM}
+		       , #{USE_YN}
+		       , #{SORT_ORD}
+               , #{G_USR_CD}
+               , now()
+               , #{G_USR_CD}
+               , now()                           
+          ) 
+	</insert>
+	
+	<!-- 평가 항목 수정 -->
+	<update id="U_handleVlaItemList" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_QA_VLA_ITM_INF
+		SET    VLA_ITM_NM = #{VLA_ITM_NM}
+		     , USE_YN     = #{USE_YN}    
+		     , SORT_ORD   = #{SORT_ORD}    
+             , CHG_ID     = #{G_USR_CD}   
+             , CHG_DTM    = now()
+		WHERE  VLA_ITM_CD = #{VLA_ITM_CD}
+	</update>
+	
+	<!-- 평가 항목 삭제 -->
+	<delete id="D_handleVlaItemList" parameterType="java.util.HashMap">
+		DELETE FROM TBL_APP_QA_VLA_ITM_INF
+		WHERE  VLA_ITM_CD = #{VLA_ITM_CD}
+	</delete>
+	
+	<!-- 평가 내용 추가 -->
+	<insert id="C_handleVlaContList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_CONT_INF (
+				 VLA_ITM_CD
+			   , VLA_CONT_CD
+		       , VLA_CONT_NM
+		       , USE_YN
+		       , SORT_ORD
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}
+               , #{VLA_CONT_CD}
+		       , #{VLA_CONT_NM}
+		       , #{USE_YN}
+		       , #{SORT_ORD}
+               , #{G_USR_CD}
+               , now()
+               , #{G_USR_CD}
+               , now()                           
+          ) 
+	</insert>
+	
+	<!-- 평가 내용 수정 -->
+	<update id="U_handleVlaContList" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_QA_VLA_CONT_INF
+		SET    VLA_CONT_NM = #{VLA_CONT_NM}
+		     , USE_YN      = #{USE_YN}    
+		     , SORT_ORD    = #{SORT_ORD}    
+             , CHG_ID      = #{G_USR_CD}   
+             , CHG_DTM     = now()
+		WHERE  VLA_ITM_CD  = #{VLA_ITM_CD}
+		AND    VLA_CONT_CD = #{VLA_CONT_CD}
+	</update>
+	
+	<!-- 평가 내용 삭제 -->
+	<delete id="D_handleVlaContList" parameterType="java.util.HashMap">
+		DELETE FROM TBL_APP_QA_VLA_CONT_INF
+		WHERE  VLA_ITM_CD  = #{VLA_ITM_CD}
+		AND    VLA_CONT_CD = #{VLA_CONT_CD}
+	</delete>
+	
+		<!-- 평가 내용 조회 -->
+	<select id="R_getVlaCont" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_CONT_NM
+		       , USE_YN		
+		       , SORT_ORD		       
+		FROM     TBL_APP_QA_VLA_CONT_INF C		       
+		WHERE    VLA_ITM_CD = #{VLA_ITM_CD}
+		ORDER BY SORT_ORD
+	</select>	
+	
+	<!-- 평가 기준 조회 -->
+	<select id="R_getVlaStnd" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT   VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_STND_CD
+		       , VLA_STND_NM
+		       , VLA_STND_VERS
+		       , VLA_EXPL
+		       , USE_YN		
+		       , SORT_ORD
+		       , SCO
+		       , LST_VERS_YN
+		FROM     TBL_APP_QA_VLA_STND_INF C		       
+		WHERE    VLA_CONT_CD = #{VLA_CONT_CD}
+		AND      LST_VERS_YN = 'Y'
+		ORDER BY SORT_ORD, VLA_STND_CD
+	</select>
+	
+	<!--평가 기준 수정(신규 추가시 기존 LST_VER_YN 'N' 처리) -->
+	<update id="U_setVlaStnd" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_QA_VLA_STND_INF
+		SET    LST_VERS_YN   = 'N'
+		     , CHG_ID        = #{G_USR_CD}
+		     , CHG_DTM       = now()
+		WHERE  VLA_ITM_CD    = #{VLA_ITM_CD}
+		AND    VLA_CONT_CD   = #{VLA_CONT_CD}
+		AND    VLA_STND_CD   = #{VLA_STND_CD}
+		AND    VLA_STND_VERS = #{VLA_STND_VERS}
+	</update>
+		
+	<!-- 평가 기준 추가 (복사시 버젼업 하여 추가)-->
+	<insert id="C_addVlaStndVersionUp" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STND_INF (
+				 VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_STND_CD
+		       , VLA_STND_VERS
+		       , VLA_STND_NM
+		       , VLA_EXPL
+		       , SCO		       	
+		       , SORT_ORD
+		       , USE_YN	
+		       , LST_VERS_YN
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}                                
+               , #{VLA_CONT_CD}                                
+               , #{VLA_STND_CD}                             
+               , SFTM_CREATE_VLA_STND_VERS(DATE_FORMAT(now(), '%Y'), #{VLA_STND_CD})
+               , #{VLA_STND_NM}                             
+               , #{VLA_EXPL}                                 
+               , #{SCO}       	                        
+               , #{SORT_ORD}                                   
+               , #{USE_YN}                                    
+               , 'Y'                               
+               , #{G_USR_CD}                             
+               , now()                                    
+               , #{G_USR_CD}                                
+               , now()                                    
+          ) 
+	</insert>
+	
+	<!-- 평가 기준 신규 이력 추가-->
+	<insert id="C_addVlaStndSP" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STND_INF_SP (
+				 VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_STND_CD
+		       , VLA_STND_VERS
+		       , VLA_STND_NM
+		       , VLA_EXPL
+		       , SCO		       	
+		       , SORT_ORD
+		       , USE_YN	
+		       , LST_VERS_YN
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}                                
+               , #{VLA_CONT_CD}                                
+               , #{VLA_STND_CD}                             
+               , #{VLA_STND_VERS}
+               , #{VLA_STND_NM}                             
+               , #{VLA_EXPL}                                 
+               , #{SCO}       	                        
+               , #{SORT_ORD}                                   
+               , #{USE_YN}                                    
+               , 'Y'                                
+               , #{G_USR_CD}                             
+               , now()                                    
+               , #{G_USR_CD}                                
+               , now()                                    
+          ) 
+	</insert>
+	
+	<!-- 평가 기준 업데이트 이력 추가 -->
+	<insert id="C_addVlaStndSPUpdate" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STND_INF_SP (
+				 VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_STND_CD
+		       , VLA_STND_VERS
+		       , VLA_STND_NM
+		       , VLA_EXPL
+		       , SCO		       	
+		       , SORT_ORD
+		       , USE_YN	
+		       , LST_VERS_YN
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}                                
+               , #{VLA_CONT_CD}                                
+               , #{VLA_STND_CD}                             
+               , CONCAT('SV',CONVERT(CONVERT(SUBSTR((#{VLA_STND_VERS}), 3), INTEGER) + 1, CHAR))
+               , #{VLA_STND_NM}                             
+               , #{VLA_EXPL}                                 
+               , #{SCO}       	                        
+               , #{SORT_ORD}                                   
+               , #{USE_YN}                                    
+               , 'Y'                                
+               , #{G_USR_CD}                             
+               , now()                                    
+               , #{G_USR_CD}                                
+               , now()                                    
+          ) 
+	</insert>
+	<!-- 평가 기준 추가  -->
+	<insert id="C_addVlaStnd" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STND_INF (
+				 VLA_ITM_CD
+		       , VLA_CONT_CD
+		       , VLA_STND_CD
+		       , VLA_STND_VERS
+		       , VLA_STND_NM
+		       , VLA_EXPL
+		       , SCO		       	
+		       , SORT_ORD
+		       , USE_YN	
+		       , LST_VERS_YN
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+		) VALUES ( 	 
+                 #{VLA_ITM_CD}                                
+               , #{VLA_CONT_CD}                                
+               , #{VLA_STND_CD}                              
+               , SFTM_CREATE_VLA_STND_VERS(DATE_FORMAT(now(), '%Y'), #{VLA_STND_CD})
+               , #{VLA_STND_NM}                             
+               , #{VLA_EXPL}                                 
+               , #{SCO}       	                        
+               , #{SORT_ORD}                                   
+               , #{USE_YN}                                    
+               , 'Y'                                
+               , #{G_USR_CD}                             
+               , NOW()                                    
+               , #{G_USR_CD}                                
+               , NOW()                                   
+          ) 
+	</insert>
+	
+	<!-- 표준 스크립트 페이지 평가표 목록 조회 -->
+	<select id="R_getBrdList" resultType="java.util.HashMap">
+		SELECT DISTINCT VLA_BRD_CD AS CODE
+			 , VLA_BRD_NM          AS CODE_NM
+		FROM   TBL_APP_QA_VLA_BRD_INF	  
+		WHERE  USE_YN = 'Y'	    		
+	</select>
+	
+	<!-- 표준 스크립트 페이지 평가 버전 목록 조회 -->
+	<select id="R_getBrdVerList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT VLA_BRD_VERS AS CODE
+			 , VLA_BRD_VERS AS CODE_NM
+		FROM   TBL_APP_QA_VLA_BRD_INF	  
+		WHERE  USE_YN = 'Y'
+		AND    VLA_BRD_CD = #{VLA_BRD_CD}	    		
+	</select> 
+	
+	<!-- 평가표 조회 -->
+	<select id="R_getBrdInfoList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT B.VLA_BRD_NM
+		     , BL.VLA_BRD_CD
+             , BL.VLA_BRD_VERS
+             , BL.VLA_ITM_CD
+             , I.VLA_ITM_NM
+             , BL.VLA_CONT_CD
+             , C.VLA_CONT_NM
+             , BL.VLA_STND_CD
+             , S.VLA_STND_NM
+             , BL.VLA_STND_VERS
+             , BL.VLA_STND_SEQNO
+             , CONCAT(LPAD(I.SORT_ORD, 2,'0'), LPAD(C.SORT_ORD, 2,'0'), LPAD(S.SORT_ORD, 2,'0')) AS ORDER_STD
+		FROM   TBL_APP_QA_VLA_BRD_LST_INF BL
+		INNER JOIN TBL_APP_QA_VLA_BRD_INF B
+        ON     (B.VLA_BRD_CD    = BL.VLA_BRD_CD AND B.VLA_BRD_VERS = BL.VLA_BRD_VERS)
+		INNER JOIN TBL_APP_QA_VLA_ITM_INF I
+        ON     I.VLA_ITM_CD    = BL.VLA_ITM_CD
+		INNER JOIN TBL_APP_QA_VLA_CONT_INF C
+        ON     C.VLA_CONT_CD   = BL.VLA_CONT_CD
+        INNER JOIN TBL_APP_QA_VLA_STND_INF S
+        ON     (S.VLA_STND_CD  = BL.VLA_STND_CD AND S.VLA_STND_VERS = BL.VLA_STND_VERS)
+        INNER JOIN (SELECT VLA_STND_VERS, VLA_STND_CD FROM TBL_APP_QA_VLA_STND_INF WHERE LST_VERS_YN = 'Y' AND USE_YN = 'Y' ) DD                
+        ON     BL.VLA_STND_CD = DD.VLA_STND_CD
+		WHERE  BL.VLA_BRD_CD   = #{VLA_BRD_CD}	
+		AND    BL.VLA_BRD_VERS = #{VLA_BRD_VERS}  
+		ORDER BY ORDER_STD, BL.VLA_STND_SEQNO    		
+	</select> 
+	
+	<delete id="D_delStnScrtList" parameterType="java.util.HashMap">
+		DELETE FROM TBL_APP_QA_VLA_STN_SCRT
+		WHERE VLA_BRD_CD   = #{VLA_BRD_CD}   
+	    AND   VLA_BRD_VERS = #{VLA_BRD_VERS}
+	    AND   STT_TRSM_DTM = DATE_FORMAT(STR_TO_DATE(#{STT_TRSM_DTM}, '%Y%m%d%H%i%S'),'%Y-%m-%d %T.0')
+	</delete>
+		
+	<!--표준 스크립트 적용일자 리스트 조회 -->
+	<select id="R_getIsScrtListApplyDate" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT DISTINCT DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d%H%i%s') AS value
+			 , DATE_FORMAT(STT_TRSM_DTM, '%Y-%m-%d %H:%i:%s') AS name
+		FROM   TBL_APP_QA_VLA_STN_SCRT        
+		WHERE  VLA_BRD_CD   = #{VLA_BRD_CD}	
+		AND    VLA_BRD_VERS = #{VLA_BRD_VERS}   
+		ORDER BY STT_TRSM_DTM DESC
+	</select>
+	
+	<!--표준 스크립트 조회 -->
+	<select id="R_getStnScrtList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT B.VLA_BRD_NM
+		     , SS.VLA_BRD_CD
+             , SS.VLA_BRD_VERS
+             , SS.SEQ_NO
+             , SS.VLA_ITM_CD
+             , I.VLA_ITM_NM
+             , SS.VLA_CONT_CD
+             , C.VLA_CONT_NM
+             , SS.VLA_STND_CD
+             , S.VLA_STND_NM
+             , SS.VLA_STND_VERS
+             , SS.VLA_TITLE
+             , IFNULL(SS.VLA_CONT_CN_1, '') AS VLA_CONT_CN_1
+             , IFNULL(SS.VLA_CONT_CN_2, '') AS VLA_CONT_CN_2
+             , IFNULL(SS.VLA_CONT_CN_3, '') AS VLA_CONT_CN_3
+             , SS.VLA_CONT_CN_1_SCO
+             , SS.VLA_CONT_CN_2_SCO
+             , SS.VLA_CONT_CN_3_SCO
+             , CONCAT(SS.VLA_CONT_CN_1, ' ', IFNULL(SS.VLA_CONT_CN_2, ''), ' ', IFNULL(SS.VLA_CONT_CN_3, '')) AS VLA_CONT_CN
+             , SS.VLA_CONT_CN_1_SCO + NVL(SS.VLA_CONT_CN_2_SCO, 0) + NVL(SS.VLA_CONT_CN_3_SCO, 0)             AS VLA_CONT_CN_SCO
+             , DATE_FORMAT(SS.STT_TRSM_DTM, '%Y%m%d%H%i%s')                                                   AS STT_TRSM_DTM
+             , SS.SORT_ORD
+             , SS.VLA_NCES_YN
+		FROM   TBL_APP_QA_VLA_STN_SCRT SS
+		INNER JOIN TBL_APP_QA_VLA_BRD_INF B
+        ON     (B.VLA_BRD_CD   = SS.VLA_BRD_CD AND B.VLA_BRD_VERS  = SS.VLA_BRD_VERS)
+		INNER JOIN TBL_APP_QA_VLA_ITM_INF I
+        ON     I.VLA_ITM_CD    = SS.VLA_ITM_CD
+		INNER JOIN TBL_APP_QA_VLA_CONT_INF C
+        ON     C.VLA_CONT_CD   = SS.VLA_CONT_CD
+        INNER JOIN TBL_APP_QA_VLA_STND_INF S
+        ON     (S.VLA_STND_CD  = SS.VLA_STND_CD AND S.VLA_STND_VERS = SS.VLA_STND_VERS)
+		WHERE  SS.VLA_BRD_CD   = #{VLA_BRD_CD}	
+			<if test='SEARCH_NEW == "Y"'>
+		AND    SS.VLA_BRD_VERS = (SELECT DISTINCT VLA_BRD_VERS
+								  FROM   TBL_APP_QA_VLA_STN_SCRT
+								  WHERE  VLA_BRD_CD   = #{VLA_BRD_CD}
+								  AND    VLA_TITLE IS NOT NULL	
+								  AND    DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d') != '99990101000000'
+								  ORDER BY VLA_BRD_VERS DESC
+								  LIMIT 1)
+	  	AND    DATE_FORMAT(SS.STT_TRSM_DTM, '%Y%m%d%H%i%s') = (SELECT DISTINCT STT_TRSM_DTM
+														       FROM   TBL_APP_QA_VLA_STN_SCRT
+														       WHERE  VLA_BRD_CD   = #{VLA_BRD_CD}
+														       AND    VLA_TITLE IS NOT NULL	
+														       AND    VLA_BRD_VERS = (SELECT DISTINCT VLA_BRD_VERS
+																        			  FROM   TBL_APP_QA_VLA_STN_SCRT
+																        			  WHERE  VLA_BRD_CD   = #{VLA_BRD_CD}
+																        			  AND    VLA_TITLE IS NOT NULL	
+																        			  AND    DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d') != '99990101000000'
+																        			  ORDER BY VLA_BRD_VERS DESC
+																        			  LIMIT 1)
+														       AND    DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d') != '99990101000000'
+														       ORDER BY STT_TRSM_DTM DESC
+														       LIMIT 1)
+			</if>
+			<if test='SEARCH_NEW == "N"'>
+		AND    SS.VLA_BRD_VERS = #{VLA_BRD_VERS}   
+		AND    DATE_FORMAT(SS.STT_TRSM_DTM, '%Y%m%d%H%i%s') = #{STT_TRSM_DTM}  
+			</if>		
+		ORDER BY SS.VLA_ITM_CD, SS.VLA_CONT_CD, SS.VLA_STND_CD, SS.SEQ_NO
+	</select> 
+
+	<!-- 스크립트 수정 -->
+	<!-- <update id="U_setStnScrtList" parameterType="java.util.HashMap">
+		UPDATE TBL_APP_QA_VLA_STN_SCRT
+		SET    VLA_TITLE         = #{VLA_TITLE}
+             , VLA_CONT_CN_1     = #{VLA_CONT_CN_1}
+             , VLA_CONT_CN_2     = #{VLA_CONT_CN_2}
+             , VLA_CONT_CN_3     = #{VLA_CONT_CN_3}
+             , VLA_CONT_CN_1_SCO = IFNULL(#{VLA_CONT_CN_1_SCO}, 0)
+             , VLA_CONT_CN_2_SCO = IFNULL(#{VLA_CONT_CN_2_SCO}, 0)
+             , VLA_CONT_CN_3_SCO = IFNULL(#{VLA_CONT_CN_3_SCO}, 0)
+             , STT_TRSM_DTM      = DATE_FORMAT(STR_TO_DATE(#{STT_TRSM_DTM}, '%Y%m%d'),'%Y-%m-%d %T.0')
+             , CHG_ID            = #{G_USR_CD}
+             , CHG_DTM           = now()
+             , SORT_ORD          = #{SORT_ORD}
+             , VLA_NCES_YN       = #{VLA_NCES_YN}
+		WHERE  VLA_BRD_CD   = #{VLA_BRD_CD}
+		AND    VLA_BRD_VERS = #{VLA_BRD_VERS}
+		AND    SEQ_NO       = #{SEQ_NO}
+		AND    REG_ID       = #{G_USR_CD}
+	</update> -->
+	
+	<!-- 스크립트 추가 -->
+	<insert id="C_setStnScrtList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STN_SCRT (
+				 VLA_BRD_CD
+               , VLA_BRD_VERS
+               , SEQ_NO
+               , VLA_ITM_CD
+               , VLA_CONT_CD
+               , VLA_STND_CD
+               , VLA_STND_VERS
+               , VLA_TITLE
+               , VLA_CONT_CN_1
+               , VLA_CONT_CN_2
+               , VLA_CONT_CN_3
+               , VLA_CONT_CN_1_SCO
+               , VLA_CONT_CN_2_SCO
+               , VLA_CONT_CN_3_SCO
+               , STT_TRSM_DTM
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+               , SORT_ORD
+               , VLA_NCES_YN
+		) VALUES ( 	 
+                 #{VLA_BRD_CD}
+               , #{VLA_BRD_VERS}
+               , #{SEQ_NO}
+               , #{VLA_ITM_CD}
+               , #{VLA_CONT_CD}
+               , #{VLA_STND_CD}
+               , #{VLA_STND_VERS}
+               , #{VLA_TITLE}
+               , #{VLA_CONT_CN_1}
+               , #{VLA_CONT_CN_2}
+               , #{VLA_CONT_CN_3}
+               , IFNULL(#{VLA_CONT_CN_1_SCO}, 0)
+               , IFNULL(#{VLA_CONT_CN_2_SCO}, 0)
+               , IFNULL(#{VLA_CONT_CN_3_SCO}, 0)               
+               , DATE_FORMAT(STR_TO_DATE(#{STT_TRSM_DTM}, '%Y%m%d%H%i%S'),'%Y-%m-%d %T.0')
+               , #{G_USR_CD}
+               , now()
+               , #{G_USR_CD}
+               , now()  
+               , #{SORT_ORD}  
+               , #{VLA_NCES_YN}                         
+          ) 
+	</insert>
+	
+	<!-- 스크립트 이력 추가 -->
+	<insert id="C_setStnScrtListSP" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_STN_SCRT_SP (
+				 VLA_BRD_CD
+               , VLA_BRD_VERS
+               , SEQ_NO
+               , VLA_ITM_CD
+               , VLA_CONT_CD
+               , VLA_STND_CD
+               , VLA_STND_VERS
+               , VLA_TITLE
+               , VLA_CONT_CN_1
+               , VLA_CONT_CN_2
+               , VLA_CONT_CN_3
+               , VLA_CONT_CN_1_SCO
+               , VLA_CONT_CN_2_SCO
+               , VLA_CONT_CN_3_SCO
+               , STT_TRSM_DTM
+               , REG_ID
+               , REG_DTM
+               , CHG_ID
+               , CHG_DTM
+               , SORT_ORD
+               , VLA_NCES_YN
+		) VALUES ( 	 
+                 #{VLA_BRD_CD}
+               , #{VLA_BRD_VERS}
+               , #{SEQ_NO}
+               , #{VLA_ITM_CD}
+               , #{VLA_CONT_CD}
+               , #{VLA_STND_CD}
+               , #{VLA_STND_VERS}
+               , #{VLA_TITLE}
+               , #{VLA_CONT_CN_1}
+               , #{VLA_CONT_CN_2}
+               , #{VLA_CONT_CN_3}
+               , IFNULL(#{VLA_CONT_CN_1_SCO}, 0)
+               , IFNULL(#{VLA_CONT_CN_2_SCO}, 0)
+               , IFNULL(#{VLA_CONT_CN_3_SCO}, 0)
+               , DATE_FORMAT(STR_TO_DATE(#{STT_TRSM_DTM}, '%Y%m%d%H%i%S'),'%Y-%m-%d %T.0')
+               , #{G_USR_CD}
+               , NOW()
+               , #{G_USR_CD}
+               , NOW() 
+               , #{SORT_ORD}   
+               , #{VLA_NCES_YN}                        
+          ) 
+	</insert>
+	
+	<!-- 평가표정보 selectBox -->
+	<select id="R_getVlaVersion" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+			SELECT 
+				DISTINCT
+		    	 VLA_BRD_CD AS value
+		    	,VLA_BRD_NM AS name
+			FROM aib.TBL_APP_QA_VLA_BRD_INF
+		   WHERE USE_YN = 'Y'
+		   ORDER BY REG_DTM DESC
+	</select>
+
+
+	<!-- 현재 사용중인 전체평가기준표 불러오기 -->
+	<select id="R_getVlaBrdAllInf" resultType="java.util.HashMap">
+
+		SELECT 
+			VLA_ALL_TABLE.VLA_ITM_CD	
+			,VLA_ALL_TABLE.VLA_ITM_NM
+			,VLA_ALL_TABLE.VLA_CONT_CD
+			,VLA_ALL_TABLE.VLA_CONT_NM
+			,VLA_ALL_TABLE.VLA_STND_CD
+			,VLA_ALL_TABLE.VLA_STND_NM           
+			,VLA_ALL_TABLE.VLA_STND_VERS
+			,VLA_ALL_TABLE.SYNC
+			,VLA_ALL_TABLE.VLA_BRD_VERS
+			,VLA_ALL_TABLE.VLA_BRD_CD
+			,VLA_ALL_TABLE.ORDER_STD
+			,ROW_NUMBER() OVER() AS VLA_STND_SEQNO
+			,VLA_ALL_TABLE.SORT1
+			,VLA_ALL_TABLE.SORT2
+			,VLA_ALL_TABLE.SORT3
+			 FROM
+			(
+				SELECT 		
+					AA.VLA_ITM_CD	
+					,AA.VLA_ITM_NM
+					,CC.VLA_CONT_CD
+					,BB.VLA_CONT_NM
+					,CC.VLA_STND_CD
+					,CC.VLA_STND_NM           
+					,CC.VLA_STND_VERS
+					,'N' AS SYNC
+					,'' AS VLA_BRD_VERS
+					,'' AS VLA_BRD_CD
+					, CONCAT(LPAD(AA.SORT_ORD, 2,'0'), LPAD(BB.SORT_ORD, 2,'0'), LPAD(CC.SORT_ORD, 2,'0')) AS ORDER_STD
+					, AA.SORT_ORD AS SORT1
+					, BB.SORT_ORD AS SORT2
+					, CC.SORT_ORD AS SORT3
+				  	FROM aib.TBL_APP_QA_VLA_ITM_INF AA
+				    INNER JOIN aib.TBL_APP_QA_VLA_CONT_INF BB
+				      ON  AA.VLA_ITM_CD = BB.VLA_ITM_CD
+				     AND  BB.USE_YN = 'Y' 
+				     AND  AA.USE_YN = BB.USE_YN
+				    INNER JOIN aib.TBL_APP_QA_VLA_STND_INF CC
+				      ON  AA.VLA_ITM_CD = BB.VLA_ITM_CD
+				      AND BB.VLA_CONT_CD = CC.VLA_CONT_CD
+				      AND AA.USE_YN = CC.USE_YN
+				      AND CC.LST_VERS_YN = 'Y'		    				    					    			   		    		
+			     ORDER BY SORT1, SORT2, SORT3 ASC
+			) VLA_ALL_TABLE
+			ORDER BY SORT1, VLA_ITM_NM, SORT2, VLA_CONT_NM, SORT3, VLA_STND_NM ASC			
+
+		    	
+	</select>
+
+
+	<!-- 특정 평가기준표 불러오기 -->
+	<select id="R_getVlaBrdSingleInf" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+		SELECT 
+			STD.VLA_BRD_CD 	
+			,STD.VLA_ITM_CD
+			,AA.VLA_ITM_NM
+			,STD.VLA_CONT_CD 	
+			,BB.VLA_CONT_NM
+			,STD.VLA_STND_CD 	
+			,CC.VLA_STND_NM
+			,STD.VLA_STND_SEQNO 
+			,STD.VLA_STND_VERS 	
+			,STD.REG_ID 			
+			,DATE_FORMAT(STD.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+			,STD.CHG_ID 			
+			,DATE_FORMAT(STD.CHG_DTM, '%Y-%m-%d %H:%i:%s') AS CHG_DTM
+            ,CASE WHEN STD.VLA_STND_VERS = DD.VLA_STND_VERS THEN 'Y'
+            		   ELSE 'N'
+            	  END AS CHK_LAST_STND_VERS
+            ,DD.VLA_STND_VERS AS LAST_STND_VERS
+            ,STD.VLA_BRD_VERS
+            ,CONCAT(LPAD(AA.SORT_ORD, 2,'0'), LPAD(BB.SORT_ORD, 2,'0'), LPAD(CC.SORT_ORD, 2,'0')) AS ORDER_STD
+		  	FROM  TBL_APP_QA_VLA_BRD_LST_INF STD
+		    INNER JOIN TBL_APP_QA_VLA_ITM_INF AA 
+		 	   ON STD.VLA_ITM_CD = AA.VLA_ITM_CD
+		    INNER JOIN TBL_APP_QA_VLA_CONT_INF BB
+		       ON BB.VLA_CONT_CD = STD.VLA_CONT_CD
+		    INNER JOIN TBL_APP_QA_VLA_STND_INF CC
+		       ON STD.VLA_STND_VERS = CC.VLA_STND_VERS 
+		      AND STD.VLA_STND_CD = CC.VLA_STND_CD
+            INNER JOIN (SELECT VLA_STND_VERS, VLA_STND_CD FROM TBL_APP_QA_VLA_STND_INF WHERE LST_VERS_YN = 'Y' AND USE_YN = 'Y' ) DD                
+               ON STD.VLA_STND_CD = DD.VLA_STND_CD
+		    WHERE 		    	
+			 	  STD.VLA_BRD_CD = #{STD_VLA}
+			  AND STD.VLA_BRD_VERS = (SELECT MAX(TMP.VLA_BRD_VERS) FROM TBL_APP_QA_VLA_BRD_INF TMP WHERE TMP.VLA_BRD_CD = #{STD_VLA})
+	     ORDER BY STD.VLA_STND_SEQNO
+		    	
+	</select>
+
+	<!-- 평가표생성시 코드, 버전 불러오기  -->
+
+	<select id="R_getCreateVlaVersionInfo" resultType="java.util.HashMap">
+			SELECT 
+		    	 (SELECT SFTM_CREATE_VLA_BRD_CD(DATE_FORMAT(NOW(), '%Y%m%d')) FROM DUAL) AS VLA_BRD_CD
+		    	,(SELECT SFTM_CREATE_VLA_BRD_VERS(DATE_FORMAT(NOW(), '%Y%m%d')) FROM DUAL) AS VLA_BRD_VERS
+		    FROM DUAL
+	</select>
+
+	<!-- 신규평가표 정보 생성 -->
+	<insert id="C_handleVlaBrdInf" parameterType="java.util.HashMap">
+
+			INSERT INTO aib.TBL_APP_QA_VLA_BRD_INF (
+					VLA_BRD_CD 	
+					, VLA_BRD_NM 	
+					, VLA_BRD_VERS
+					, USE_YN
+					, REG_ID
+					, REG_DTM
+					, CHG_ID
+					, CHG_DTM
+				) VALUES (
+					#{VLA_BRD_CD}
+				  ,	#{VLA_BRD_NM}
+				  , #{VLA_BRD_VERS}
+				  , 'Y'
+				  , #{G_USR_CD}
+				  , NOW()
+				  , #{G_USR_CD}
+				  , NOW()
+				)
+
+	</insert>
+
+
+	<!-- 평가표 버전 업그레이드 표준스크립트와 매치를 위해서 무조건 insert로 결정 회의 삭제시에만 모든 항목 N 20.10.14-->
+	<update id="U_handleVlaBrdInf" parameterType="java.util.HashMap">
+
+			UPDATE aib.TBL_APP_QA_VLA_BRD_INF 
+			   SET USE_YN = #{USE_YN}
+			 WHERE VLA_BRD_CD = #{VLA_BRD_CD}  
+
+	</update>
+
+	<delete id="D_handleVlaBrdInf" parameterType="java.util.HashMap">
+
+	</delete>	
+
+
+	<!-- 평가표 목록 insert -->
+	<insert id="C_handleVlaBrdLstInf" parameterType="java.util.HashMap">
+
+			INSERT INTO aib.TBL_APP_QA_VLA_BRD_LST_INF (
+				VLA_BRD_CD 	
+				, VLA_BRD_VERS
+				, VLA_ITM_CD
+				, VLA_CONT_CD
+				, VLA_STND_CD
+				, VLA_STND_VERS
+				, VLA_STND_SEQNO
+				, REG_ID
+				, REG_DTM
+				, CHG_ID
+				, CHG_DTM
+			) VALUES (
+				#{VLA_BRD_CD}
+			  ,	#{VLA_BRD_VERS}
+			  , #{VLA_ITM_CD}
+			  , #{VLA_CONT_CD }
+			  , #{VLA_STND_CD}
+			  , #{VLA_STND_VERS}
+			  , #{VLA_STND_SEQNO}
+			  , #{G_USR_CD}
+			  , NOW()
+			  , #{G_USR_CD}
+			  , NOW()					  
+			)
+
+
+	</insert>
+
+
+	<!-- 평가표 목록 기준 최신화 -->
+	<update id="U_handleVlaBrdLstInf" parameterType="java.util.HashMap">
+
+			
+			INSERT aib.TBL_APP_QA_VLA_BRD_LST_INF (
+				VLA_BRD_CD 	
+				, VLA_BRD_VERS
+				, VLA_ITM_CD
+				, VLA_CONT_CD
+				, VLA_STND_CD
+				, VLA_STND_VERS
+				, VLA_STND_SEQNO
+				, REG_ID
+				, REG_DTM
+				, CHG_ID
+				, CHG_DTM
+			) VALUES (
+				#{VLA_BRD_CD}
+			  ,	#{VLA_BRD_VERS}
+			  , #{VLA_ITM_CD}
+			  , #{VLA_CONT_CD }
+			  , #{VLA_STND_CD}
+			  , #{VLA_STND_VERS}
+			  , #{VLA_STND_SEQNO}
+			  , #{G_USR_CD}
+			  , NOW()
+			  , #{G_USR_CD}
+			  , NOW()
+			)
+			ON DUPLICATE KEY
+			UPDATE 					
+					VLA_STND_VERS		= #{VLA_STND_VERS}
+				,	CHG_ID				= #{G_USR_CD}
+				,	CHG_DTM				= NOW()
+				,	VLA_STND_SEQNO		= #{VLA_STND_SEQNO}  
+
+	</update>
+
+	<delete id="D_handleVlaBrdLstInf" parameterType="java.util.HashMap">
+
+			DELETE FROM aib.TBL_APP_QA_VLA_BRD_LST_INF 
+			 WHERE VLA_BRD_CD   = #{VLA_BRD_CD}
+			   AND VLA_BRD_VERS = #{VLA_BRD_VERS}
+			   AND VLA_ITM_CD   = #{VLA_ITM_CD}
+			   AND VLA_CONT_CD  = #{VLA_CONT_CD}
+			   AND VLA_STND_CD  = #{VLA_STND_CD}
+
+	</delete>
+
+
+
+
+	<!-- 일련번호가 매겨지지 않은 통화이력 리스트 -->
+	<select id="R_notMatchingCnsCallList" resultType="java.util.HashMap">
+
+		SELECT
+			CALL.SEQ_NO
+			,CALL.CENT_CD
+			,(SELECT CENT_NM FROM TBL_SYS_CENT_INF WHERE CENT_CD = CALL.CENT_CD) AS CENT_NM
+			,CALL.TEAM_CD
+			,(SELECT TEAM_NM FROM TBL_SYS_TEAM_INF WHERE TEAM_CD = CALL.TEAM_CD) AS TEAM_NM
+			,CALL.USR_CD
+			,(SELECT USR_NM FROM STT_TBL_USR WHERE USR_CD = CALL.USR_CD) AS USR_NM
+			,CALL.CUS_MNGNO
+			,DATE_FORMAT(CALL.CALL_STRT_DTM, '%Y-%m-%d %H:%i:%s') AS CALL_STRT_DTM
+			,DATE_FORMAT(CALL.TEL_CONN_DTM, '%Y-%m-%d %H:%i:%s') AS TEL_CONN_DTM
+			,CALL.REC_FILE_PATH 
+			,CALL.REC_FILE_NM 
+			,CALL.REC_ID
+			,CALL.REG_ID
+			,DATE_FORMAT(CALL.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+			,'N' AS CHK
+			FROM  aib.TBL_CNS_CALL_SP CALL,
+				  aib.TBL_APP_QA_VLA_TGT_REC_INF VAL
+			WHERE 
+				VAL.SEQ_NO NOT IN CALL.SEQ_NO		    	
+
+	</select>
+
+	<!-- 평가대상번호 중복 확인 -->
+	<select id="R_checkVlaTgtNo" resultType="java.util.HashMap">
+		SELECT 
+			COUNT(VLA_TGT_NO) AS CHECK_CNT 
+	    	FROM  aib.TBL_APP_QA_VLA_TGT_REC_INF
+			WHERE VLA_TGT_NO = #{STD_VLA}		    	
+	
+	</select>
+
+	<!-- 배정대상조회 : 미배정 평가대상 조회 -->
+	<select id="R_getDeAsgnVlaTgtList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+			SELECT DISTINCT
+					B.CUS_NM AS CUS_NM
+				,	DATE_FORMAT(B.CTR_DT , '%Y-%m-%d ') AS CTR_DT
+				,	B.CTR_NO AS CTR_NO
+				,	SFTM_GET_TEAM_NAME(B.CENT_CD, B.TEAM_CD) AS TEAM_NM <!-- 상담원 -->
+				,	SFTM_GET_USER_NAME(B.USR_CD) AS USR_NM
+				,	SFTM_GET_USER_NAME(B.QAA) AS QAA  
+				,	B.VLA_TGT_NO
+				,	A.ASG_USR
+				,	B.VLA_STA_CD AS VLA_STA_CD		
+				,	A.TEAM_CD AS TEAM_CD_QA <!-- qa -->
+				,	A.CENT_CD AS CENT_CD_QA			
+				,	B.TEAM_CD AS TEAM_CD_USR <!-- 상담원 -->
+				,	B.CENT_CD AS CENT_CD_USR
+				,	B.USR_CD
+				,	B.VLA_BRD_CD
+				,	B.VLA_BRD_VERS
+			FROM TBL_APP_QA_VLA_RST B
+			LEFT OUTER JOIN TBL_APP_QA_ASG_TGT_INF A 
+			ON A.VLA_TGT_NO = B.VLA_TGT_NO
+			WHERE 1=1
+			AND B.AUTO_VLA_YN = 'N'
+			<choose>
+				<when test='ASG_USR == "D"'>								<!--  미배정 조회 -->
+					AND  B.QAA IS NULL
+					AND  B.VLA_STA_CD = '200'
+					
+				<if test="TEAM_CD_USR != null and TEAM_CD_USR != ''">   <!-- USR_TEAM -->
+						AND B.TEAM_CD = #{TEAM_CD_USR}
+				</if>
+				<if test="TEAM_CD_USR == null and TEAM_CD_USR == ''">   <!-- USR_TEAM -->
+						AND B.TEAM_CD IN (
+							SELECT TM.TEAM_CD FROM TBL_SYS_TEAM_INF TM WHERE TP_CD = 'B'
+						)
+				</if>
+				<if test="CENT_CD_USR != null and CENT_CD_USR != ''">   <!-- USR_CENT -->
+						AND B.CENT_CD = #{CENT_CD_USR}
+				</if>
+				</when>
+				
+				<when test='ASG_USR == "A"'>   <!--  배정 조회 -->
+					AND B.QAA IS NOT NULL
+				<!-- 	AND B.VLA_STA_CD NOT IN('400') -->
+					<if test="TEAM_CD_QA != null and TEAM_CD_QA != ''">   	<!--  QA_TEAM -->
+						AND A.TEAM_CD = #{TEAM_CD_QA}
+					</if>
+					<if test="TEAM_CD_QA == null and TEAM_CD_QA == ''">   	<!--  QA_TEAM -->
+						AND A.TEAM_CD IN (
+							SELECT TM.TEAM_CD FROM TBL_SYS_TEAM_INF TM WHERE TP_CD = 'Q'
+						)
+					</if>
+					<if test="CENT_CD_QA != null and CENT_CD_QA != ''">   	<!--  QA_CENT -->
+						AND A.CENT_CD = #{CENT_CD_QA}
+					</if> 
+					 <if test="QAA != null and QAA != ''"> 					<!-- QA_QA -->
+						AND B.QAA = #{QAA}
+					</if>
+					<if test="TEAM_CD_USR != null and TEAM_CD_USR != ''">   <!-- USR_TEAM -->
+						AND B.TEAM_CD = #{TEAM_CD_USR}
+					</if>
+					<if test="TEAM_CD_USR == null and TEAM_CD_USR == ''">   <!-- USR_TEAM -->
+						AND B.TEAM_CD IN (
+							SELECT TM.TEAM_CD FROM TBL_SYS_TEAM_INF TM WHERE TP_CD = 'B'
+						)
+					</if>
+					<if test="CENT_CD_USR != null and CENT_CD_USR != ''">   <!-- USR_CENT -->
+						AND B.CENT_CD = #{CENT_CD_USR}
+					</if>
+					
+				</when>	  
+			</choose>	
+			<if test="START_DATE != null and START_DATE != '' and END_DATE != null and END_DATE != ''">
+				AND B.CTR_DT BETWEEN #{START_DATE} AND #{END_DATE}
+			</if>
+			
+			<if test="VLA_STA_CD != null and VLA_STA_CD != ''">
+				AND B.VLA_STA_CD = #{VLA_STA_CD}
+			</if>
+			
+			 <if test="USR_CD != null and USR_CD != ''"> 			<!-- USR_USR -->
+				AND B.USR_CD = #{USR_CD}
+			</if>
+			 <if test="USR_CD == null and USR_CD == ''"> 			<!-- USR_USR -->
+				AND B.USR_CD IN (
+					SELECT USR_CD FROM STT_TBL_USR
+					WHERE TEAM_CD IN (
+						SELECT TM.TEAM_CD FROM TBL_SYS_TEAM_INF TM WHERE TP_CD = 'B'
+					)
+				)
+			</if>
+			
+			
+			 ORDER BY B.CTR_DT DESC, B.CUS_NM ASC
+		<include refid="CMM.PAGING_TAIL"/> 
+	</select>
+
+	<!-- 배정대상조회 : QA 조회 -->
+	<select id="R_getQaList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+				SELECT
+						U.USR_NM AS QA
+					,	COUNT(R.VLA_STA_CD) AS TOTAL
+					,	SUM(CASE WHEN R.VLA_STA_CD = '200' THEN 1 ELSE 0 END) AS WAITING
+					,	SUM(CASE WHEN R.VLA_STA_CD = '300' THEN 1 ELSE 0 END) AS VLA
+					,	SUM(CASE WHEN R.VLA_STA_CD = '310' THEN 1 ELSE 0 END) AS REQ
+					,	SUM(CASE WHEN R.VLA_STA_CD = '320' THEN 1 ELSE 0 END) AS REQDONE
+					,	SUM(CASE WHEN R.VLA_STA_CD = '500' THEN 1 ELSE 0 END) AS DENIED
+					,	SUM(CASE WHEN R.VLA_STA_CD = '400' THEN 1 ELSE 0 END) AS VLADONE
+					,	U.USR_CD AS ASG_USR    
+					,	A.TEAM_CD
+					<!-- ,(SELECT TM.TEAM_CD FROM TBL_SYS_TEAM_INF TM WHERE TP_CD = 'Q') AS TEAM_CD -->
+					,A.CENT_CD
+					
+				FROM STT_TBL_USR U
+				LEFT OUTER JOIN TBL_APP_QA_ASG_TGT_INF A
+					ON U.USR_CD = A.ASG_USR
+				LEFT OUTER JOIN TBL_APP_QA_VLA_RST R
+					ON R.VLA_TGT_NO = A.VLA_TGT_NO
+				<!--   AND  R.CTR_DT BETWEEN DATE_ADD(NOW(),INTERVAL -(SELECT STND_VL FROM TBL_SYS_CENT_SETVL_INF WHERE STND_CD = '00011' AND APY_YN = 'Y') MONTH) AND NOW() -->
+					AND  R.CTR_DT BETWEEN DATE_ADD(NOW(),	INTERVAL - (SELECT STND_VL FROM TBL_SYS_CENT_SETVL_INF WHERE CENT_CD = #{USR_CENT_INFO} AND STND_CD = '00011' AND APY_YN = 'Y') MONTH) AND NOW()
+				WHERE 1 = 1
+				AND U.AUTH_LV = '5'
+				AND U.ACT_STA_CD = 'A'
+				<choose>
+					<when test='ASG_USR == "D" and USR_AUTH_INFO != "1"' >		<!--  미배정 조회 -->
+						<if test="USR_CD != null and USR_CD != ''">
+							AND U.USR_CD = #{USR_CD}
+						</if>
+						
+						<!-- <if test="TEAM_CD_QA != null and TEAM_CD_QA != ''"> 		QA_TEAM 
+							AND A.TEAM_CD = #{TEAM_CD_QA}
+						</if>
+						<if test="CENT_CD_QA != null and CENT_CD_QA != ''">
+							AND A.CENT_CD = #{CENT_CD_QA}
+						</if> -->
+					</when>
+					
+					<when test='ASG_USR == "A" and USR_AUTH_INFO != "1"'>		<!--  배정 조회 -->
+					<!-- 	<if test="TEAM_CD_QA != null and TEAM_CD_QA != ''"> 		QA_TEAM 
+							AND A.TEAM_CD = #{TEAM_CD_QA}
+						</if>
+						<if test="CENT_CD_QA != null and CENT_CD_QA != ''">
+							AND A.CENT_CD = #{CENT_CD_QA}
+						</if> -->
+					</when>
+				</choose>
+				<if test='ASG_USR == "D" and USR_AUTH_INFO == "1"'>
+					<if test="USR_CD != null and USR_CD != ''">
+						AND U.USR_CD = #{USR_CD}
+					</if>
+					<if test="TEAM_CD_QA != null and TEAM_CD_QA != ''"> 		<!-- QA_TEAM  -->
+						AND A.TEAM_CD = #{TEAM_CD_QA}
+					</if>
+					<if test="CENT_CD_QA != null and CENT_CD_QA != ''">
+						AND A.CENT_CD = #{CENT_CD_QA}
+					</if>
+				</if>
+				<if test='ASG_USR == "A" and USR_AUTH_INFO == "1"'>
+					<if test="TEAM_CD_QA != null and TEAM_CD_QA != ''"> 		<!-- QA_TEAM  -->
+						AND A.TEAM_CD = #{TEAM_CD_QA}
+					</if>
+					<if test="CENT_CD_QA != null and CENT_CD_QA != ''">
+						AND A.CENT_CD = #{CENT_CD_QA}
+					</if>
+				</if>
+				GROUP BY U.USR_NM
+				ORDER BY U.USR_NM ASC
+		
+		<include refid="CMM.PAGING_TAIL"/> 
+	</select>
+	
+	<!-- 배정대상조회 : 저장   -->
+	 <insert id="C_handleDeAsgnVlaTgtQA" parameterType="java.util.HashMap">	
+		INSERT INTO TBL_APP_QA_VLA_RST  (
+				VLA_TGT_NO
+			,	QAA     
+			,	VLA_BRD_CD
+			,	VLA_BRD_VERS
+		) VALUES (
+				#{VLA_TGT_NO}
+			,	#{QAA} 
+			,	#{VLA_BRD_CD}
+			,	#{VLA_BRD_VERS}
+		)
+		ON DUPLICATE KEY 
+		UPDATE 	
+				QAA =#{QAA}
+			,	VLA_BRD_CD=#{VLA_BRD_CD}
+			,	VLA_BRD_VERS=#{VLA_BRD_VERS}
+		
+	</insert>
+	<insert id="C_handleDeAsgnVlaTgtAsgUsr" parameterType="java.util.HashMap">			
+	INSERT INTO TBL_APP_QA_ASG_TGT_INF  (	
+				VLA_TGT_NO
+			,	CHG_ID 
+			,	CHG_DTM
+			,	ASG_USR
+			,	ASG_DTM
+			,	CENT_CD
+			,	TEAM_CD
+	) VALUES (
+				#{VLA_TGT_NO}
+			,	#{G_USR_CD}
+			,	NOW() 
+			,	#{ASG_USR}
+			,	NOW()
+			,	(SELECT CENT_CD FROM STT_TBL_USR WHERE USR_CD = #{ASG_USR} )
+			,	(SELECT TEAM_CD FROM STT_TBL_USR WHERE USR_CD = #{ASG_USR} )
+	)
+	ON DUPLICATE KEY 
+	UPDATE 
+			CHG_ID =#{G_USR_CD}
+		,	CHG_DTM =NOW() 
+		,	ASG_USR =#{ASG_USR}
+		,	ASG_DTM = NOW()
+		,	CENT_CD = (SELECT CENT_CD FROM STT_TBL_USR WHERE USR_CD = #{ASG_USR} ) 
+		,	TEAM_CD = (SELECT TEAM_CD FROM STT_TBL_USR WHERE USR_CD = #{ASG_USR} )
+	</insert>
+
+	<!-- QA 평가상태 전체 count -->
+	<select id="R_getQATotalCnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	SELECT 
+		IFNULL(SUM(Z.CNT1 + Z.CNT2 + Z.CNT3 + Z.CNT4 + Z.CNT5 + Z.CNT6), 0) AS TOTAL,
+		IFNULL(Z.CNT1, 0) AS CNT1,
+		IFNULL(Z.CNT2, 0) AS CNT2,
+		IFNULL(Z.CNT3, 0) AS CNT3,
+		IFNULL(Z.CNT4, 0) AS CNT4,
+		IFNULL(Z.CNT5, 0) AS CNT5,
+		IFNULL(Z.CNT6, 0) AS CNT6
+	FROM
+	(
+		SELECT 
+			SUM(CASE WHEN R.VLA_STA_CD = '200' THEN 1 ELSE 0 END) AS CNT1,
+			SUM(CASE WHEN R.VLA_STA_CD = '300' THEN 1 ELSE 0 END) AS CNT2,
+			SUM(CASE WHEN R.VLA_STA_CD = '310' THEN 1 ELSE 0 END) AS CNT3,
+			SUM(CASE WHEN R.VLA_STA_CD = '320' THEN 1 ELSE 0 END) AS CNT4,
+			SUM(CASE WHEN R.VLA_STA_CD = '400' AND R.AUTO_VLA_YN = 'N' THEN 1 ELSE 0 END) AS CNT5,
+			SUM(CASE WHEN R.VLA_STA_CD = '500' THEN 1 ELSE 0 END) AS CNT6
+		FROM TBL_APP_QA_VLA_RST R
+		INNER JOIN STT_TBL_CMN_CD_SML CD ON (CD.BIG_CD = 'VLA_STA_CD' AND R.VLA_STA_CD = CD.SML_CD)
+		INNER JOIN (
+			SELECT
+				VLA_BRD_CD, STT_TRSM_DTM, VLA_BRD_VERS,
+				SUM(VLA_CONT_CN_1_SCO) + SUM(VLA_CONT_CN_2_SCO) + SUM(VLA_CONT_CN_3_SCO) AS MAX_SS_SCO
+			FROM TBL_APP_QA_VLA_STN_SCRT
+			GROUP BY VLA_BRD_CD, VLA_BRD_VERS, STT_TRSM_DTM
+		) SS ON  R.VLA_BRD_CD = SS.VLA_BRD_CD AND R.VLA_BRD_VERS = SS.VLA_BRD_VERS AND SS.STT_TRSM_DTM IS NOT NULL AND R.STT_TRSM_DTM = SS.STT_TRSM_DTM 
+		INNER JOIN (
+			SELECT
+				AA.VLA_TGT_NO,
+				SUM(AA.MAX_SCO_1) AS SUM_SCO_1,
+				SUM(AA.MAX_SCO_2) AS SUM_SCO_2,
+				SUM(AA.MAX_SCO_3) AS SUM_SCO_3,
+				SUM(AA.MAX_SCO_1) + SUM(AA.MAX_SCO_2) + SUM(AA.MAX_SCO_3) AS TOT_RST_SCO
+			FROM(
+				SELECT
+					RST.VLA_TGT_NO,
+					MAX(VLA_CONT_CN_1_SCO) AS MAX_SCO_1,
+					MAX(VLA_CONT_CN_2_SCO) AS MAX_SCO_2,
+					MAX(VLA_CONT_CN_3_SCO) AS MAX_SCO_3
+				FROM TBL_APP_QA_VLA_RST RST
+				INNER JOIN TBL_APP_QA_VLA_RST_DET DET
+				ON RST.VLA_TGT_NO = DET.VLA_TGT_NO
+				GROUP BY RST.VLA_TGT_NO, DET.VLA_BRD_CD, DET.VLA_BRD_VERS, DET.SEQ_NO
+			) AA
+			GROUP BY AA.VLA_TGT_NO
+		) DET ON DET.VLA_TGT_NO = R.VLA_TGT_NO
+		INNER JOIN (
+			SELECT
+				ATI.VLA_TGT_NO,
+				USR.USR_CD AS USR_CD,
+				USR.USR_NM AS USR_NM,
+				ATI.ASG_DTM
+			FROM TBL_APP_QA_ASG_TGT_INF ATI
+			LEFT OUTER JOIN STT_TBL_USR USR 
+			ON ATI.ASG_USR = USR.USR_CD
+		) C ON (R.VLA_TGT_NO = C.VLA_TGT_NO)
+		WHERE 1=1
+		<if test="AUTO_VLA_YN_Y == 'Y'.toString() and AUTO_VLA_YN_N == 'N'.toString()">
+		AND (R.AUTO_VLA_YN = 'Y' OR R.VLA_STA_CD = '100')
+		</if>
+		<if test="AUTO_VLA_YN_Y == 'N'.toString() and AUTO_VLA_YN_N == 'Y'.toString()">
+		AND (R.AUTO_VLA_YN = 'N' AND R.VLA_STA_CD != '100')
+		</if>
+		<if test="CENT_CD != null and CENT_CD != ''">
+		AND R.CENT_CD = #{CENT_CD}
+		</if>
+		<if test="TEAM_CD != null and TEAM_CD != ''">
+		AND R.TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="USR_CD != null and USR_CD != ''">
+		AND C.USR_CD = #{USR_CD}
+		</if>
+		<if test="VLA_STA_CD != null and VLA_STA_CD != ''">
+		AND R.VLA_STA_CD = #{VLA_STA_CD}
+		</if>
+		<if test="(START_DATE != null and START_DATE != '') and (END_DATE != null and END_DATE != '')">
+		AND DATE_FORMAT(ASG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+		</if>
+	)Z
+	</select>
+	
+	<!-- QA 평가 현황 리스트 조회 -->
+	<select id="R_getQAVlaList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>  
+		SELECT
+			R.VLA_TGT_NO,
+			R.CENT_CD,
+			(SELECT CENT_NM FROM TBL_SYS_CENT_INF WHERE CENT_CD = R.CENT_CD) AS CENT_NM,
+			R.TEAM_CD, 
+			(SELECT TEAM_NM FROM TBL_SYS_TEAM_INF WHERE TEAM_CD = R.TEAM_CD) AS TEAM_NM,
+			R.USR_CD, 
+			(SELECT USR_NM FROM STT_TBL_USR WHERE USR_CD = R.USR_CD) AS TELLER_NM,
+			R.CUS_NM,
+			DATE_FORMAT(R.CTR_DT, '%Y-%m-%d') AS CTR_DT,
+			R.CTR_NO,
+			(SELECT COUNT(SEQ_NO) FROM TBL_APP_QA_VLA_TGT_REC_INF WHERE VLA_TGT_NO = R.VLA_TGT_NO) AS REC_CNT,
+			SS.MAX_SS_SCO,
+			DET.TOT_RST_SCO,
+			CONCAT(IFNULL(ROUND((DET.TOT_RST_SCO/SS.MAX_SS_SCO * 100), 2),0), '%') AS PRCENT_SCO,
+			CD.SML_NM AS VLA_STA_CD,
+			R.VLA_STA_CD AS VLA_STA_CD_VALUE,
+			C.USR_NM AS QA_NM,
+			DATE_FORMAT(C.ASG_DTM, '%Y-%m-%d') AS ASG_DTM,
+			DATE_FORMAT(R.VLA_DTM, '%Y-%m-%d %H:%i:%s') AS VLA_DTM,
+			R.VLA_BRD_CD,
+			R.VLA_BRD_VERS
+		FROM TBL_APP_QA_VLA_RST R
+		INNER JOIN STT_TBL_CMN_CD_SML CD ON (CD.BIG_CD = 'VLA_STA_CD' AND R.VLA_STA_CD = CD.SML_CD)
+		INNER JOIN (
+			SELECT
+				VLA_BRD_CD, STT_TRSM_DTM, VLA_BRD_VERS,
+				SUM(VLA_CONT_CN_1_SCO) + SUM(IFNULL(VLA_CONT_CN_2_SCO, 0)) + SUM(IFNULL(VLA_CONT_CN_3_SCO, 0)) AS MAX_SS_SCO
+			FROM TBL_APP_QA_VLA_STN_SCRT
+			GROUP BY VLA_BRD_CD, VLA_BRD_VERS, STT_TRSM_DTM
+		) SS ON  R.VLA_BRD_CD = SS.VLA_BRD_CD AND R.VLA_BRD_VERS = SS.VLA_BRD_VERS AND SS.STT_TRSM_DTM IS NOT NULL AND R.STT_TRSM_DTM = SS.STT_TRSM_DTM
+		INNER JOIN (
+			SELECT
+				AA.VLA_TGT_NO,
+				SUM(AA.MAX_SCO_1) AS SUM_SCO_1,
+				SUM(AA.MAX_SCO_2) AS SUM_SCO_2,
+				SUM(AA.MAX_SCO_3) AS SUM_SCO_3,
+				SUM(AA.MAX_SCO_1) + SUM(AA.MAX_SCO_2) + SUM(AA.MAX_SCO_3) AS TOT_RST_SCO
+			FROM(
+				SELECT
+					RST.VLA_TGT_NO,
+					MAX(VLA_CONT_CN_1_SCO) AS MAX_SCO_1,
+					MAX(VLA_CONT_CN_2_SCO) AS MAX_SCO_2,
+					MAX(VLA_CONT_CN_3_SCO) AS MAX_SCO_3
+				FROM TBL_APP_QA_VLA_RST RST
+				INNER JOIN TBL_APP_QA_VLA_RST_DET DET
+				ON RST.VLA_TGT_NO = DET.VLA_TGT_NO
+				GROUP BY RST.VLA_TGT_NO, DET.VLA_BRD_CD, DET.VLA_BRD_VERS, DET.SEQ_NO
+			) AA
+			GROUP BY AA.VLA_TGT_NO
+		) DET ON DET.VLA_TGT_NO = R.VLA_TGT_NO
+		INNER JOIN (
+			SELECT
+				ATI.VLA_TGT_NO,
+				USR.USR_CD AS USR_CD,
+				USR.USR_NM AS USR_NM,
+				ATI.ASG_DTM
+			FROM TBL_APP_QA_ASG_TGT_INF ATI
+			LEFT OUTER JOIN STT_TBL_USR USR 
+			ON ATI.ASG_USR = USR.USR_CD
+		) C ON (R.VLA_TGT_NO = C.VLA_TGT_NO)
+		WHERE 1=1
+		<if test="AUTO_VLA_YN_Y == 'Y'.toString() and AUTO_VLA_YN_N == 'N'.toString()">
+		AND (R.AUTO_VLA_YN = 'Y' OR R.VLA_STA_CD = '100')
+		</if>
+		<if test="AUTO_VLA_YN_Y == 'N'.toString() and AUTO_VLA_YN_N == 'Y'.toString()">
+		AND (R.AUTO_VLA_YN = 'N' AND R.VLA_STA_CD != '100')
+		</if>
+		<if test="CENT_CD != null and CENT_CD != ''">
+		AND R.CENT_CD = #{CENT_CD}
+		</if>
+		<if test="TEAM_CD != null and TEAM_CD != ''">
+		AND R.TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="USR_CD != null and USR_CD != ''">
+		AND C.USR_CD = #{USR_CD}
+		</if>
+		<if test="VLA_STA_CD != null and VLA_STA_CD != ''">
+		AND R.VLA_STA_CD = #{VLA_STA_CD}
+		</if>
+		<if test="(START_DATE != null and START_DATE != '') and (END_DATE != null and END_DATE != '')">
+		AND DATE_FORMAT(ASG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+		</if>
+		ORDER BY R.CTR_DT DESC, TELLER_NM, R.CENT_CD, R.TEAM_CD, QA_NM
+		<include refid="CMM.PAGING_TAIL"/> 	
+	</select>
+	
+	<!-- 상담사 평가상태 전체 count -->
+	<select id="R_getUserTotalCnt" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	SELECT 
+		IFNULL(SUM(Z.CNT1 + Z.CNT2 + Z.CNT3 + Z.CNT4 + Z.CNT5 + Z.CNT6 + Z.CNT7 + Z.CNT8), 0) AS TOTAL,
+		IFNULL(SUM(Z.CNT1 + Z.CNT2), 0) AS AUTOTOTAL,
+		IFNULL(Z.CNT1, 0) AS CNT1,
+		IFNULL(Z.CNT2, 0) AS CNT2,
+		IFNULL(SUM(Z.CNT3 + Z.CNT4 + Z.CNT5 + Z.CNT6 + Z.CNT7 + Z.CNT8), 0) AS PASSTOTAL,
+		IFNULL(Z.CNT3, 0) AS CNT3,
+		IFNULL(Z.CNT4, 0) AS CNT4,
+		IFNULL(Z.CNT5, 0) AS CNT5,
+		IFNULL(Z.CNT6, 0) AS CNT6,
+		IFNULL(Z.CNT7, 0) AS CNT7,
+		IFNULL(Z.CNT8, 0) AS CNT8
+	FROM
+	(
+		SELECT 
+			SUM(CASE WHEN R.VLA_STA_CD = '100' THEN 1 ELSE 0 END) AS CNT1,
+			SUM(CASE WHEN R.VLA_STA_CD = '400' AND R.AUTO_VLA_YN = 'Y' THEN 1 ELSE 0 END) AS CNT2,
+			SUM(CASE WHEN R.VLA_STA_CD = '200' THEN 1 ELSE 0 END) AS CNT3,
+			SUM(CASE WHEN R.VLA_STA_CD = '300' THEN 1 ELSE 0 END) AS CNT4,
+			SUM(CASE WHEN R.VLA_STA_CD = '310' THEN 1 ELSE 0 END) AS CNT5,
+			SUM(CASE WHEN R.VLA_STA_CD = '320' THEN 1 ELSE 0 END) AS CNT6,
+			SUM(CASE WHEN R.VLA_STA_CD = '400' AND R.AUTO_VLA_YN = 'N' THEN 1 ELSE 0 END) AS CNT7,
+			SUM(CASE WHEN R.VLA_STA_CD = '500' THEN 1 ELSE 0 END) AS CNT8
+		FROM TBL_APP_QA_VLA_RST R
+		INNER JOIN STT_TBL_CMN_CD_SML CD ON (CD.BIG_CD = 'VLA_STA_CD' AND R.VLA_STA_CD = CD.SML_CD)
+		INNER JOIN (
+			SELECT
+				VLA_BRD_CD, STT_TRSM_DTM, VLA_BRD_VERS,
+				SUM(VLA_CONT_CN_1_SCO) + SUM(VLA_CONT_CN_2_SCO) + SUM(VLA_CONT_CN_3_SCO) AS MAX_SS_SCO
+			FROM TBL_APP_QA_VLA_STN_SCRT
+			GROUP BY VLA_BRD_CD, VLA_BRD_VERS, STT_TRSM_DTM
+		) SS ON  R.VLA_BRD_CD = SS.VLA_BRD_CD AND R.VLA_BRD_VERS = SS.VLA_BRD_VERS AND SS.STT_TRSM_DTM IS NOT NULL AND R.STT_TRSM_DTM = SS.STT_TRSM_DTM 
+		INNER JOIN (
+			SELECT
+				AA.VLA_TGT_NO,
+				SUM(AA.MAX_SCO_1) AS SUM_SCO_1,
+				SUM(AA.MAX_SCO_2) AS SUM_SCO_2,
+				SUM(AA.MAX_SCO_3) AS SUM_SCO_3,
+				SUM(AA.MAX_SCO_1) + SUM(AA.MAX_SCO_2) + SUM(AA.MAX_SCO_3) AS TOT_RST_SCO
+			FROM(
+				SELECT
+					RST.VLA_TGT_NO,
+					MAX(VLA_CONT_CN_1_SCO) AS MAX_SCO_1,
+					MAX(VLA_CONT_CN_2_SCO) AS MAX_SCO_2,
+					MAX(VLA_CONT_CN_3_SCO) AS MAX_SCO_3
+				FROM TBL_APP_QA_VLA_RST RST
+				INNER JOIN TBL_APP_QA_VLA_RST_DET DET
+				ON RST.VLA_TGT_NO = DET.VLA_TGT_NO
+				GROUP BY RST.VLA_TGT_NO, DET.VLA_BRD_CD, DET.VLA_BRD_VERS, DET.SEQ_NO
+			) AA
+			GROUP BY AA.VLA_TGT_NO
+		) DET ON DET.VLA_TGT_NO = R.VLA_TGT_NO
+		LEFT OUTER JOIN (
+			SELECT
+				ATI.VLA_TGT_NO,
+				USR.USR_NM AS USR_NM,
+				ATI.ASG_DTM
+			FROM TBL_APP_QA_ASG_TGT_INF ATI
+			LEFT OUTER JOIN STT_TBL_USR USR 
+			ON ATI.ASG_USR = USR.USR_CD
+		) C ON (R.VLA_TGT_NO = C.VLA_TGT_NO)
+		WHERE 1=1
+		<if test="AUTO_VLA_YN_Y == 'Y'.toString() and AUTO_VLA_YN_N == 'N'.toString()">
+		AND (R.AUTO_VLA_YN = 'Y' OR R.VLA_STA_CD = '100')
+		</if>
+		<if test="AUTO_VLA_YN_Y == 'N'.toString() and AUTO_VLA_YN_N == 'Y'.toString()">
+		AND (R.AUTO_VLA_YN = 'N' AND R.VLA_STA_CD != '100')
+		</if>
+		<if test="CENT_CD != null and CENT_CD != ''">
+		AND R.CENT_CD = #{CENT_CD}
+		</if>
+		<if test="TEAM_CD != null and TEAM_CD != ''">
+		AND R.TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="USR_CD != null and USR_CD != ''">
+		AND R.USR_CD = #{USR_CD}
+		</if>
+		<if test="VLA_STA_CD != null and VLA_STA_CD != ''">
+		AND R.VLA_STA_CD = #{VLA_STA_CD}
+		</if>
+		<if test="(START_DATE != null and START_DATE != '') and (END_DATE != null and END_DATE != '')">
+		AND R.CTR_DT BETWEEN #{START_DATE} AND #{END_DATE}
+		</if>
+	)Z
+	</select>
+	
+	<!-- 상담사 평가 현황 리스트 조회 -->
+	<select id="R_getUserVlaList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+		SELECT
+			R.VLA_TGT_NO,
+			R.CENT_CD,
+			(SELECT CENT_NM FROM TBL_SYS_CENT_INF WHERE CENT_CD = R.CENT_CD) AS CENT_NM,
+			R.TEAM_CD, 
+			(SELECT TEAM_NM FROM TBL_SYS_TEAM_INF WHERE TEAM_CD = R.TEAM_CD) AS TEAM_NM,
+			R.USR_CD, 
+			(SELECT USR_NM FROM STT_TBL_USR WHERE USR_CD = R.USR_CD) AS TELLER_NM,
+			R.CUS_NM,
+			DATE_FORMAT(R.CTR_DT, '%Y-%m-%d') AS CTR_DT,
+			R.CTR_NO,
+			(SELECT COUNT(SEQ_NO) FROM TBL_APP_QA_VLA_TGT_REC_INF WHERE VLA_TGT_NO = R.VLA_TGT_NO) AS REC_CNT,
+			SS.MAX_SS_SCO,
+			DET.TOT_RST_SCO,
+			CONCAT(IFNULL(ROUND((DET.TOT_RST_SCO/SS.MAX_SS_SCO * 100), 2),0), '%') AS PRCENT_SCO,
+			CD.SML_NM AS VLA_STA_CD,
+			R.VLA_STA_CD AS VLA_STA_CD_VALUE,
+			C.USR_NM AS QA_NM,
+			DATE_FORMAT(C.ASG_DTM, '%Y-%m-%d') AS ASG_DTM,
+			DATE_FORMAT(R.VLA_DTM, '%Y-%m-%d %H:%i:%s') AS VLA_DTM,
+			R.VLA_BRD_CD,
+			R.VLA_BRD_VERS
+		FROM TBL_APP_QA_VLA_RST R
+		INNER JOIN STT_TBL_CMN_CD_SML CD ON (CD.BIG_CD = 'VLA_STA_CD' AND R.VLA_STA_CD = CD.SML_CD)
+		INNER JOIN (
+			SELECT
+				VLA_BRD_CD, STT_TRSM_DTM, VLA_BRD_VERS,
+				SUM(VLA_CONT_CN_1_SCO) + SUM(VLA_CONT_CN_2_SCO) + SUM(VLA_CONT_CN_3_SCO) AS MAX_SS_SCO
+			FROM TBL_APP_QA_VLA_STN_SCRT
+			GROUP BY VLA_BRD_CD, VLA_BRD_VERS, STT_TRSM_DTM
+		) SS ON  R.VLA_BRD_CD = SS.VLA_BRD_CD AND R.VLA_BRD_VERS = SS.VLA_BRD_VERS AND SS.STT_TRSM_DTM IS NOT NULL AND R.STT_TRSM_DTM = SS.STT_TRSM_DTM 
+		INNER JOIN (
+			SELECT
+				AA.VLA_TGT_NO,
+				SUM(AA.MAX_SCO_1) AS SUM_SCO_1,
+				SUM(AA.MAX_SCO_2) AS SUM_SCO_2,
+				SUM(AA.MAX_SCO_3) AS SUM_SCO_3,
+				SUM(AA.MAX_SCO_1) + SUM(AA.MAX_SCO_2) + SUM(AA.MAX_SCO_3) AS TOT_RST_SCO
+			FROM(
+				SELECT
+					RST.VLA_TGT_NO,
+					MAX(VLA_CONT_CN_1_SCO) AS MAX_SCO_1,
+					MAX(VLA_CONT_CN_2_SCO) AS MAX_SCO_2,
+					MAX(VLA_CONT_CN_3_SCO) AS MAX_SCO_3
+				FROM TBL_APP_QA_VLA_RST RST
+				INNER JOIN TBL_APP_QA_VLA_RST_DET DET
+				ON RST.VLA_TGT_NO = DET.VLA_TGT_NO
+				GROUP BY RST.VLA_TGT_NO, DET.VLA_BRD_CD, DET.VLA_BRD_VERS, DET.SEQ_NO
+			) AA
+			GROUP BY AA.VLA_TGT_NO
+		) DET ON DET.VLA_TGT_NO = R.VLA_TGT_NO
+		LEFT OUTER JOIN (
+			SELECT
+				ATI.VLA_TGT_NO,
+				USR.USR_NM AS USR_NM,
+				ATI.ASG_DTM
+			FROM TBL_APP_QA_ASG_TGT_INF ATI
+			LEFT OUTER JOIN STT_TBL_USR USR 
+			ON ATI.ASG_USR = USR.USR_CD
+		) C ON (R.VLA_TGT_NO = C.VLA_TGT_NO)
+		WHERE 1=1
+		<if test="AUTO_VLA_YN_Y == 'Y'.toString() and AUTO_VLA_YN_N == 'N'.toString()">
+		AND (R.AUTO_VLA_YN = 'Y' OR R.VLA_STA_CD = '100')
+		</if>
+		<if test="AUTO_VLA_YN_Y == 'N'.toString() and AUTO_VLA_YN_N == 'Y'.toString()">
+		AND (R.AUTO_VLA_YN = 'N' AND R.VLA_STA_CD != '100')
+		</if>
+		<if test="CENT_CD != null and CENT_CD != ''">
+		AND R.CENT_CD = #{CENT_CD}
+		</if>
+		<if test="TEAM_CD != null and TEAM_CD != ''">
+		AND R.TEAM_CD = #{TEAM_CD}
+		</if>
+		<if test="USR_CD != null and USR_CD != ''">
+		AND R.USR_CD = #{USR_CD}
+		</if>
+		<if test="VLA_STA_CD != null and VLA_STA_CD != ''">
+		AND R.VLA_STA_CD = #{VLA_STA_CD}
+		</if>
+		<if test="(START_DATE != null and START_DATE != '') and (END_DATE != null and END_DATE != '')">
+		AND R.CTR_DT BETWEEN #{START_DATE} AND #{END_DATE}
+		</if>
+		ORDER BY R.CTR_DT DESC, TELLER_NM, R.CENT_CD, R.TEAM_CD, QA_NM
+		<include refid="CMM.PAGING_TAIL"/> 	
+	</select>
+	
+	<select id="R_getVlaStnScrtList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+			SELECT
+				B.VLA_BRD_NM 
+			    , SS.VLA_BRD_CD 
+			    , SS.VLA_BRD_VERS 
+			    , SS.SEQ_NO 
+			    , SS.VLA_ITM_CD 
+			    , I.VLA_ITM_NM 
+			    , SS.VLA_CONT_CD 
+			    , C.VLA_CONT_NM 
+			    , SS.VLA_STND_CD 
+			    , S.VLA_STND_NM 
+			    , SS.VLA_STND_VERS 
+			    , SS.VLA_TITLE 
+			    , IFNULL(SS.VLA_CONT_CN_1, '') AS VLA_CONT_CN_1 
+			    , IFNULL(SS.VLA_CONT_CN_2, '') AS VLA_CONT_CN_2 
+			    , IFNULL(SS.VLA_CONT_CN_3, '') AS VLA_CONT_CN_3     
+			    , SS.VLA_CONT_CN_1_SCO
+			    , SS.VLA_CONT_CN_2_SCO 
+			    , SS.VLA_CONT_CN_3_SCO 
+                , R.VLA_TGT_NO
+                , R.VLA_STA_CD
+                , R.CUS_NM
+                , R.CTR_NO
+                , R.CTR_DT
+				, CD.SML_NM AS VLA_STA_NM
+                , IFNULL(RD.VLA_CONT_CN_1_SCO,0) AS RD_VLA_CONT_CN1_SCO
+			    , IFNULL(RD.VLA_CONT_CN_2_SCO,0) AS RD_VLA_CONT_CN2_SCO
+			    , IFNULL(RD.VLA_CONT_CN_3_SCO,0) AS RD_VLA_CONT_CN3_SCO
+			    , CONCAT(SS.VLA_CONT_CN_1, ' ', IFNULL(SS.VLA_CONT_CN_2, ''), ' ', IFNULL(SS.VLA_CONT_CN_3, '')) AS VLA_CONT_CN 
+			    , SS.VLA_CONT_CN_1_SCO + IFNULL(SS.VLA_CONT_CN_2_SCO, 0) + IFNULL(SS.VLA_CONT_CN_3_SCO, 0) AS VLA_CONT_CN_SCO 
+			    , DATE_FORMAT(SS.STT_TRSM_DTM, '%Y%m%d') AS STT_TRSM_DTM 
+			    , SS.SORT_ORD   
+                , RD.SEQ_NO
+                , RD.VIC_RCN_RST_CONT AS VIC_RCN_RST_CONT
+                , RD.VIC_RCN_RST_STRT_TIM AS VIC_RCN_RST_STRT_TIM
+                , RD.CALL_ID AS CALL_ID
+			FROM TBL_APP_QA_VLA_STN_SCRT SS                
+			INNER JOIN TBL_APP_QA_VLA_BRD_INF B 
+			ON (B.VLA_BRD_CD = SS.VLA_BRD_CD AND B.VLA_BRD_VERS = SS.VLA_BRD_VERS) 
+			INNER JOIN TBL_APP_QA_VLA_ITM_INF I 
+			ON I.VLA_ITM_CD = SS.VLA_ITM_CD 
+			INNER JOIN TBL_APP_QA_VLA_CONT_INF C 
+			ON C.VLA_CONT_CD = SS.VLA_CONT_CD 
+			INNER JOIN TBL_APP_QA_VLA_STND_INF S 
+			ON (S.VLA_STND_CD = SS.VLA_STND_CD AND S.VLA_STND_VERS = SS.VLA_STND_VERS)
+            INNER JOIN TBL_APP_QA_VLA_RST R
+            ON (R.VLA_BRD_CD = SS.VLA_BRD_CD AND R.VLA_BRD_VERS = SS.VLA_BRD_VERS) 
+            INNER JOIN STT_TBL_CMN_CD_SML CD 
+            ON (CD.BIG_CD = 'VLA_STA_CD' AND R.VLA_STA_CD = CD.SML_CD)
+            LEFT OUTER JOIN  TBL_APP_QA_VLA_RST_DET RD 
+            ON (RD.SEQ_NO = SS.SEQ_NO AND RD.VLA_TGT_NO = R.VLA_TGT_NO)
+            WHERE R.VLA_TGT_NO   = #{VLA_TGT_NO}
+         	AND  SS.VLA_BRD_CD   = R.VLA_BRD_CD	
+		    AND  SS.VLA_BRD_VERS = R.VLA_BRD_VERS       
+            AND  DATE_FORMAT(SS.STT_TRSM_DTM, '%Y%m%d %H:%i:%s') = (SELECT MAX(DATE_FORMAT(STT_TRSM_DTM, '%Y%m%d %H:%i:%s'))
+								                           FROM   TBL_APP_QA_VLA_STN_SCRT
+								                           WHERE  VLA_BRD_CD = R.VLA_BRD_CD
+								                           AND    VLA_BRD_VERS = R.VLA_BRD_VERS			
+								                           ORDER BY STT_TRSM_DTM DESC
+								                           LIMIT 1)	
+			ORDER BY SS.VLA_ITM_CD, SS.VLA_CONT_CD, SS.VLA_STND_CD, SS.SEQ_NO
+	</select>
+	
+	<select id="R_getQAAsgTgtInf" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+			SELECT
+			    Y.PS_DTM
+			    , Y.VLA_TITLE
+			    , Y.USR_NM
+			    , Y.VLA_STA_NM
+			    , Y.SCRT_COUNT
+			    , SUM(Y.SUM_VLA_CONT_CN_1_SCO + Y.SUM_VLA_CONT_CN_2_SCO + Y.SUM_VLA_CONT_CN_3_SCO) TOTAL_COUNT
+			FROM
+			    (
+			    SELECT
+			        DATE_FORMAT(A.PS_DTM, '%Y-%m-%d') AS PS_DTM  
+			        , B.VLA_TITLE     
+			        , SFTM_GET_USER_NAME(C.USR_CD) AS USR_NM
+			        , (
+			         SELECT
+			         	SML_NM 
+			         FROM STT_TBL_CMN_CD_SML 
+			         WHERE BIG_CD = 'VLA_STA_CD' 
+			         AND MDL_CD = 'TYPE' 
+			         AND SML_CD = A.VLA_STA_CD 
+			          ) AS VLA_STA_NM
+			        , COUNT(B.SEQ_NO) SCRT_COUNT
+			        , SUM(B.VLA_CONT_CN_1_SCO) AS SUM_VLA_CONT_CN_1_SCO
+			        , SUM(B.VLA_CONT_CN_2_SCO) AS SUM_VLA_CONT_CN_2_SCO
+			        , SUM(B.VLA_CONT_CN_3_SCO) AS SUM_VLA_CONT_CN_3_SCO
+			    FROM TBL_APP_QA_VLA_RST_SP A
+			    LEFT JOIN TBL_APP_QA_VLA_RST_DET B 
+			    ON (A.VLA_TGT_NO = B.VLA_TGT_NO) 
+			    lEFT JOIN TBL_APP_QA_VLA_RST C 
+			    ON (A.VLA_TGT_NO = C.VLA_TGT_NO)
+			    AND A.VLA_TGT_NO = #{VLA_TGT_NO}
+			    ) Y
+	</select>
+	
+	<select id="R_getVlaRstSpInf" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+			WITH RECURSIVE TREE AS (
+				SELECT 
+					A.SEQ_NO 
+					,A.TGT_SEQ_NO
+					,A.TGT_SEQ_NO_SEQNO
+					,CAST(A.SEQ_NO AS CHAR(100)) DEPTH
+					,A.VLA_CONT
+					,DATE_FORMAT(A.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM  
+					,A.DEL_YN
+					,SFTM_GET_USER_NAME(A.REG_ID) AS REG_ID
+				FROM TBL_APP_QA_VLA_RST_SP A
+				WHERE A.TGT_SEQ_NO = 0 
+				AND A.DEL_YN = 'N' 
+				AND A.VLA_TGT_NO = #{VLA_TGT_NO}
+				UNION ALL
+				SELECT
+					B.SEQ_NO
+					,B.TGT_SEQ_NO
+					,B.TGT_SEQ_NO_SEQNO
+					,CONCAT(C.DEPTH, ",", B.SEQ_NO) DEPTH
+					,B.VLA_CONT
+					,DATE_FORMAT(B.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM        
+					,B.DEL_YN
+					,SFTM_GET_USER_NAME(B.REG_ID) AS REG_ID 
+				FROM TBL_APP_QA_VLA_RST_SP B            
+				INNER JOIN TREE C
+				ON B.TGT_SEQ_NO = C.SEQ_NO
+				WHERE B.DEL_YN = 'N' 
+				AND B.VLA_TGT_NO = #{VLA_TGT_NO}
+			)
+				SELECT
+					SEQ_NO AS ID
+					,TGT_SEQ_NO AS PARENT_ID
+					,TGT_SEQ_NO_SEQNO AS LEVEL
+					,DEPTH
+					,VLA_CONT
+					,REG_DTM
+					,DEL_YN
+					,REG_ID
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 1), ',', -1) AS UNSIGNED) AS LVR1
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 2), ',', -1) AS UNSIGNED) AS LVR2
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 3), ',', -1) AS UNSIGNED) AS LVR3
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 4), ',', -1) AS UNSIGNED) AS LVR4
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 5), ',', -1) AS UNSIGNED) AS LVR5
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 4), ',', -1) AS UNSIGNED) AS LVR6
+					,CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(DEPTH, ',' , 5), ',', -1) AS UNSIGNED) AS LVR7
+				FROM TREE    
+				ORDER BY LVR1, LVR2, LVR3, LVR4, LVR5, LVR6, LVR7
+	</select>
+	
+	<insert id="C_handleQAVlaList" parameterType="java.util.HashMap">
+			INSERT INTO TBL_APP_QA_VLA_RST_DET (
+				VLA_TGT_NO
+				, VLA_BRD_CD
+				, VLA_BRD_VERS
+				, SEQ_NO
+				, VLA_ITM_CD
+				, VLA_CONT_CD
+				, VLA_STND_CD
+				, VLA_STND_VERS
+				, VLA_TITLE
+				, VLA_CONT_CN_1
+				, VLA_CONT_CN_2
+				, VLA_CONT_CN_3
+				, VLA_CONT_CN_1_SCO
+				, VLA_CONT_CN_2_SCO
+				, VLA_CONT_CN_3_SCO
+				, REG_ID 
+				, REG_DTM
+			) VALUES (
+				#{VLA_TGT_NO}
+				, #{VLA_BRD_CD}
+				, #{VLA_BRD_VERS}
+				, #{SEQ_NO}
+				, #{VLA_ITM_CD}
+				, #{VLA_CONT_CD}
+				, #{VLA_STND_CD}
+				, #{VLA_STND_VERS}
+				, #{VLA_TITLE}
+				, #{VLA_CONT_CN_1}
+				, #{VLA_CONT_CN_2}
+				, #{VLA_CONT_CN_3}
+				, #{VLA_CONT_CN_1_SCO}
+				, #{VLA_CONT_CN_2_SCO}
+				, #{VLA_CONT_CN_3_SCO}
+				,#{REG_ID}
+				,now()
+			)
+			ON DUPLICATE KEY
+			UPDATE 					
+				VLA_CONT_CN_1_SCO = #{VLA_CONT_CN_1_SCO}
+				, VLA_CONT_CN_2_SCO = #{VLA_CONT_CN_2_SCO}
+				, VLA_CONT_CN_3_SCO = #{VLA_CONT_CN_3_SCO}
+				, CHG_ID = #{CHG_ID}
+				, CHG_DTM = now()
+	</insert>
+	
+	<update id="U_QAVlaStateUpt" parameterType="java.util.HashMap">
+			UPDATE TBL_APP_QA_VLA_RST SET VLA_STA_CD = #{VLA_STA_CD} WHERE VLA_TGT_NO = #{VLA_TGT_NO}
+	</update>
+	
+	<insert id="C_handleQAVlaRstSp" parameterType="java.util.HashMap">
+			INSERT INTO TBL_APP_QA_VLA_RST_SP (
+				VLA_TGT_NO
+				, TGT_SEQ_NO
+				, TGT_SEQ_NO_SEQNO
+				, VLA_STA_CD
+				, VLA_CONT
+				, PS_USR
+				, PS_DTM
+				, DEL_YN
+				, REG_ID
+				, REG_DTM
+			) VALUES (
+				#{VLA_TGT_NO} 
+				, #{TGT_SEQ_NO} 
+				, #{TGT_SEQ_NO_SEQNO} 
+				, #{VLA_STA_CD}
+				, #{VLA_CONT}
+				, #{PS_USR}
+				, #{PS_DTM}
+				, #{DEL_YN}
+				, #{REG_ID}
+				, now()
+			) 
+	</insert>
+	
+	<update id="U_handleQAVlaRstSp" parameterType="java.util.HashMap">
+			UPDATE TBL_APP_QA_VLA_RST_SP SET DEL_YN = 'Y' WHERE SEQ_NO = #{ID}
+	</update>
+</mapper>	
+	

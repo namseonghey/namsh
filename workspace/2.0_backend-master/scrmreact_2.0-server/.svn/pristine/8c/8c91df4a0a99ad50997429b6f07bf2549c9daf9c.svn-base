@@ -1,0 +1,26 @@
+{
+  "files": {
+    "main.css": "/public/css/main.79f9da8e.chunk.css",
+    "main.js": "/public/js/main.78b3ed63.chunk.js",
+    "main.js.map": "/public/js/main.78b3ed63.chunk.js.map",
+    "runtime-main.js": "/public/js/runtime-main.5c143c31.js",
+    "runtime-main.js.map": "/public/js/runtime-main.5c143c31.js.map",
+    "public/css/2.b6eae0a9.chunk.css": "/public/css/2.b6eae0a9.chunk.css",
+    "public/js/2.a4516810.chunk.js": "/public/js/2.a4516810.chunk.js",
+    "public/js/2.a4516810.chunk.js.map": "/public/js/2.a4516810.chunk.js.map",
+    "index.html": "/index.html",
+    "public/css/2.b6eae0a9.chunk.css.map": "/public/css/2.b6eae0a9.chunk.css.map",
+    "public/css/main.79f9da8e.chunk.css.map": "/public/css/main.79f9da8e.chunk.css.map",
+    "public/js/2.a4516810.chunk.js.LICENSE.txt": "/public/js/2.a4516810.chunk.js.LICENSE.txt",
+    "public/media/component.css": "/public/media/user.890462d5.svg",
+    "public/media/slick-theme.css": "/public/media/slick.f97e3bbf.svg",
+    "public/media/test3.WAV": "/public/media/test3.055d4341.WAV"
+  },
+  "entrypoints": [
+    "public/js/runtime-main.5c143c31.js",
+    "public/css/2.b6eae0a9.chunk.css",
+    "public/js/2.a4516810.chunk.js",
+    "public/css/main.79f9da8e.chunk.css",
+    "public/js/main.78b3ed63.chunk.js"
+  ]
+}

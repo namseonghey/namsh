@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:tx="http://www.springframework.org/schema/tx"
+ xmlns:aop="http://www.springframework.org/schema/aop"
+ xmlns:context="http://www.springframework.org/schema/context"
+ xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+  http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+  http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd
+  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+  http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 데이터베이스 JNDI 연결 -->
+	<bean id="dataSourcePrimary" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="jdbc/scrmreact"/>
+		<property name="resourceRef" value="true" />
+	</bean>
+	
+	<!-- sqlSessionFactory -->
+	<bean id="sqlSessionFactoryPrimary" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourcePrimary" />
+		<property name="configLocation" value="classpath:/spring/mybatis-config.xml" />
+		<!-- <property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" />
+		<property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" /> -->
+		<property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" />
+	</bean>
+	
+	<!-- SqlSession -->
+	<bean id="sqlSessionPrimary" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactoryPrimary" />
+	</bean>
+	
+	<bean id="MatchScriptDAO" class="kr.co.itfact.scrm.dao.MatchScriptDAOImpl"/>	
+	
+	<!-- 트랜잭션 매니저 bean 을 등록합니다. -->
+	<bean id="transactionManagerPrimary" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourcePrimary" />
+	</bean>
+	
+	<tx:advice id="txAdvicePrimary" transaction-manager="transactionManagerPrimary">
+		<tx:attributes>
+			<tx:method name="service*" rollback-for="Exception" />
+			<tx:method name="add*" rollback-for="Exception" />
+			<tx:method name="modify*" rollback-for="Exception" />
+			<tx:method name="remove*" rollback-for="Exception" />
+			<tx:method name="handle*" rollback-for="Exception" />
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:advisor id="managerTxPrimary" advice-ref="txAdvicePrimary" pointcut="execution(* *..service.*ServiceImpl.*(..))"/>
+	</aop:config>
+	
+	<!-- 데이터베이스 JNDI 연결 -->
+	<bean id="dataSourceSecondary" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="jdbc/scrmreact"/>
+		<property name="resourceRef" value="true" />
+	</bean>
+	
+	<!-- sqlSessionFactory -->
+	<bean id="sqlSessionFactorySecondary" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSourceSecondary" />
+		<property name="configLocation" value="classpath:/spring/mybatis-config.xml" />
+		<!-- <property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" />
+		<property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" /> -->
+		<property name="mapperLocations" value="classpath:/mappers/maria/*-mapper.xml" />
+	</bean>
+	
+	<!-- SqlSession -->
+	<bean id="sqlSessionSecondary" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+		<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactorySecondary" />
+	</bean>
+	
+	<!-- 트랜잭션 매니저 bean 을 등록합니다. -->
+	<bean id="transactionManagerSecondary" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSourceSecondary" />
+	</bean>
+	
+	<tx:advice id="txAdviceSecondary" transaction-manager="transactionManagerSecondary">
+		<tx:attributes>
+			<tx:method name="service*" rollback-for="Exception" />
+			<tx:method name="add*" rollback-for="Exception" />
+			<tx:method name="modify*" rollback-for="Exception" />
+			<tx:method name="remove*" rollback-for="Exception" />
+			<tx:method name="handle*" rollback-for="Exception" />
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:advisor id="managerTxSecondary" advice-ref="txAdviceSecondary" pointcut="execution(* *..service.*ServiceImpl.*(..))"/>
+	</aop:config>
+	
+	<!-- 아노테이션 기반의 트랜잭션을 사용합니다. -->
+	<!-- 
+	<tx:annotation-driven transaction-manager="transactionManager" />
+	 -->
+</beans>

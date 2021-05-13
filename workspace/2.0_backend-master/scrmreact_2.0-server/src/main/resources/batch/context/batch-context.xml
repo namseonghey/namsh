@@ -1,0 +1,29 @@
+<beans xmlns="http://www.springframework.org/schema/beans" 
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+		http://www.springframework.org/schema/jdbc
+		http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd">
+
+	<!-- ====================================================================== -->
+	<!-- stored job-meta in database -->
+	<!-- ====================================================================== -->
+	<!-- [Transaction Manager] -->
+	<bean id="transactionManager" class="org.springframework.batch.support.transaction.ResourcelessTransactionManager" />
+	
+	<!-- [Job Repository] -->
+	<bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+		<property name="transactionManager" ref="transactionManager" />
+		<property name="validateTransactionState" value="false" />
+	</bean>
+
+	<!-- [Job Launcher] -->
+	<bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+		<property name="jobRepository" ref="jobRepository" />
+	</bean>
+	
+	<bean id="daoHandler" class="kr.co.itfact.scrm.dao.PrimaryDAOImpl">
+	</bean>
+</beans>

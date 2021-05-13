@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<configuration>
+	<property name="logack.log.home" value="/stt/tomcat/logs/scrmserver" />
+	<property name="logack.log.name" value="scrmserver" />
+	<property name="logack.log.pattern" value="[%-5level] [%d{yyyy-MM-dd HH:mm:ss.SSS}] [%-45c{1}:%4L] %msg%n" />
+	
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>${logack.log.pattern}</Pattern>
+		</layout>
+	</appender>
+	
+	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${logack.log.home}/${logack.log.name}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${logback.log.name}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<Pattern>${logack.log.pattern}</Pattern>
+		</encoder>
+	</appender>
+	
+	<!-- 
+	<logger name="kr.co.itfact" level="debug" addivivity="false"><appender-ref ref="stdout" /></logger>
+	 -->
+	
+	<root level="debug">
+		<appender-ref ref="stdout" />
+		<appender-ref ref="file" />
+	</root>
+</configuration>

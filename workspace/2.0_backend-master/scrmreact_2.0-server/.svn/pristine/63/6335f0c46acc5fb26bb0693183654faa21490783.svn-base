@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.3.xsd">
+
+	<!-- ========================================================================================== -->
+	<!-- [ destroy customer - 미청약 고객 삭제 ] 매일 0시 30분 -->
+	<!-- ========================================================================================== -->
+	<bean id="DestroyCustomerTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="DestroyCustomerDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.DestroyCustomerLauncher">
+						<property name="job" ref="DestroyCustomerJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 30 0 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ synchronize users (minute) ] 사용자 Synchronize -->
+	<!-- ========================================================================================== -->
+	<bean id="SynchronizeUsersTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="SynchronizeUsersDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SynchronizeUsersLauncher">
+						<property name="job" ref="SynchronizeUsersJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 7 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ send contract result (daily) : SHCD ] 매일 01시 전일자 계약 대상 -->
+	<!-- ========================================================================================== -->
+	<bean id="SendContractShcdDailyTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="sendContractShcdDailyDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SendContractShcdDailyLauncher">
+						<property name="job" ref="SendContractShcdDailyJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 1 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ send contract QA result (daily) : SHCD ] 매일 01시 최근 1개월 QA 완료건(50) 대상 -->
+	<!-- ========================================================================================== -->
+	<bean id="SendContractQaShcdTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="sendContractQaShcdDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SendContractQaShcdLauncher">
+						<property name="job" ref="SendContractQaShcdJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 1 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ send contract result (monthly) : SHCD ] 매월 20일 01시 전일자 계약 대상 -->
+	<!-- ========================================================================================== -->
+	<bean id="SendContractShcdMonthlyTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="sendContractShcdMonthlyDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SendContractShcdMonthlyLauncher">
+						<property name="job" ref="SendContractShcdMonthlyJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 1 19 * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ send record indexes (daily) : SHCD ] 매일 01시 전일자 계약 대상-->
+	<!-- ========================================================================================== -->
+	<bean id="SendRecordIndexShcdTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="sendRecordIndexShcdDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SendRecordIndexShcdLauncher">
+						<property name="job" ref="SendRecordIndexShcdJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 1 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ update record indexes (daily) : SHCD ] 매일 07시 전일자 계약 대상-->
+	<!-- ========================================================================================== -->
+	<bean id="UpdateRecordIndexShcdTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="updateRecordIndexShcdDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.UpdateRecordIndexShcdLauncher">
+						<property name="job" ref="UpdateRecordIndexShcdJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 7 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ SUMMARY TMR RESULT ] 매일 02시 상담원 영업실적 일배치 												-->
+	<!-- ========================================================================================== -->
+	<bean id="SummaryTmrResultTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="summaryTmrResultDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SummaryTmrResultLauncher">
+						<property name="job" ref="SummaryTmrResultJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 2 * * ?"/>
+	</bean>
+	
+	<!-- ========================================================================================== -->
+	<!-- [ Synchronize Pms Status ] 매일 n시상담원 기간계 계약상태 싱크 일배치 												-->
+	<!-- ========================================================================================== -->
+	<bean id="SynchronizePmsStatusTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<bean id="SynchronizePmsStatusDetail" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+				<property name="targetObject">
+					<bean class="kr.co.itfact.scrm.batch.launcher.SynchronizePmsStatusLauncher">
+						<property name="job" ref="SynchronizePmsStatusJob" />
+						<property name="jobLauncher" ref="jobLauncher" />
+						<property name="daoHandler" ref="daoHandler" />
+					</bean>
+				</property>
+				<property name="targetMethod" value="run" />
+				<property name="concurrent" value="false" />
+			</bean>
+		</property>
+		<property name="cronExpression" value="0 0 3 * * ?"/>
+	</bean>
+		
+	<!-- ========================================================================================== -->
+	<!-- [ Quartz Trigger : Scheduler Factory Bean ] -->
+	<!-- ========================================================================================== -->
+	<bean id="SchedulerFactoryBean" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<!-- <ref bean="DestroyCustomerTrigger" /> -->
+				<ref bean="SynchronizeUsersTrigger" />
+				<!-- <ref bean="SendContractShcdDailyTrigger" /> -->
+				<!-- <ref bean="SendContractShcdMonthlyTrigger" /> -->
+				<!-- <ref bean="SendRecordIndexShcdTrigger" /> -->
+				<!-- <ref bean="SendContractQaShcdTrigger" /> -->
+				<!-- <ref bean="UpdateRecordIndexShcdTrigger" /> -->
+				<!-- <ref bean="SummaryTmrResultTrigger" /> -->
+				<!-- <ref bean="SynchronizePmsStatusTrigger" /> -->
+			</list>
+		</property>
+	</bean>
+</beans>

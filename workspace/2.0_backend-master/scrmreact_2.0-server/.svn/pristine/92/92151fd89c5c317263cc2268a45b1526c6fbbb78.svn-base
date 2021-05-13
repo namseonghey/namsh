@@ -1,0 +1,12 @@
+#----------------------------------------------------------------
+# server configuration
+#----------------------------------------------------------------
+#server.host.local=localhost
+#server.host.dev=127.0.0.1
+#server.host.prod=10.20.4.31
+
+#server.port.local=8080
+#server.port.dev=8096
+#server.port.prod=7009
+
+server.temp.upload.path=/home/stt/work

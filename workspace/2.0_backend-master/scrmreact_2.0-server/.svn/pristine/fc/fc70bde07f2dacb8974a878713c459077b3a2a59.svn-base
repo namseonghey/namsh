@@ -1,0 +1,11 @@
+interface.target.ip.local=192.168.0.140
+interface.target.ip.dev=192.168.0.140
+interface.target.ip.prod=192.168.0.140
+
+interface.target.port.local=8080
+interface.target.port.dev=8080
+interface.target.prot.prod=8080
+
+interface.target.urlquery.ifsTest.local=/interface.service.do
+interface.target.urlquery.ifsTest.dev=/interface.service.do
+interface.target.urlquery.ifsTest.prod=/interface.service.do

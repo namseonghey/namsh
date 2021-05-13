@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="STA">
+	
+	<select id="R_getQAVlaRecInf" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		<include refid="CMM.PAGING_HEAD"/>
+			SELECT 
+				DATE_FORMAT(A.CALL_STRT_DTM, '%Y-%m-%d %H:%i:%s') AS CALL_STRT_DTM
+				, SEC_TO_TIME(TIMESTAMPDIFF(SECOND,A.CALL_STRT_DTM,A.TEL_CONN_DTM)) AS CONS_TIME
+			FROM TBL_APP_QA_VLA_TGT_REC_INF A 
+				 LEFT JOIN TBL_APP_QA_VLA_RST B
+				 ON (A.VLA_TGT_NO = B.VLA_TGT_NO)
+			WHERE 1=1	
+			AND B.QAA = #{QAA}
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<select id="R_getQAAsgTgtInf" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+			SELECT
+			    Y.PS_DTM
+			    ,Y.VLA_TITLE
+			    ,Y.USR_NM
+			    ,Y.VLA_STA_NM
+			    ,Y.SCRT_COUNT
+			    ,SUM(Y.SUM_VLA_CONT_CN_1_SCO + Y.SUM_VLA_CONT_CN_2_SCO + Y.SUM_VLA_CONT_CN_3_SCO) TOTAL_COUNT
+			FROM
+			    
+			    SELECT
+			        DATE_FORMAT(A.PS_DTM, '%Y-%m-%d') AS PS_DTM  
+			        ,B.VLA_TITLE     
+			        ,SFTM_GET_USER_NAME(C.USR_CD) AS USR_NM
+			        ,(
+			         SELECT
+			         	SML_NM 
+			         FROM STT_TBL_CMN_CD_SML 
+			         WHERE BIG_CD = 'VLA_STA_CD' 
+			         AND MDL_CD = 'TYPE' 
+			         AND SML_CD = A.VLA_STA_CD 
+			         ) AS VLA_STA_NM
+			        ,COUNT(B.SEQ_NO) SCRT_COUNT
+			        ,SUM(B.VLA_CONT_CN_1_SCO) AS SUM_VLA_CONT_CN_1_SCO
+			        ,SUM(B.VLA_CONT_CN_2_SCO) AS SUM_VLA_CONT_CN_2_SCO
+			        ,SUM(B.VLA_CONT_CN_3_SCO) AS SUM_VLA_CONT_CN_3_SCO
+			    FROM TBL_APP_QA_VLA_RST_SP A
+			    LEFT JOIN TBL_APP_QA_VLA_RST_DET B 
+			    ON (A.VLA_TGT_NO = B.VLA_TGT_NO) 
+			    lEFT JOIN TBL_APP_QA_VLA_RST C 
+			    ON (A.VLA_TGT_NO = C.VLA_TGT_NO)
+			    AND A.VLA_TGT_NO = '1000524432'
+			    ) Y
+	</select>
+	
+	<insert id="C_handleQAVlaList" parameterType="java.util.HashMap">
+		INSERT INTO TBL_APP_QA_VLA_RST_DET (
+			VLA_TGT_NO
+			, VLA_BRD_CD
+			, VLA_BRD_VERS
+			, SEQ_NO
+			, VLA_ITM_CD
+			, VLA_CONT_CD
+			, VLA_STND_CD
+			, VLA_STND_VERS
+			, VLA_TITLE
+			, VLA_CONT_CN_1
+			, VLA_CONT_CN_2
+			, VLA_CONT_CN_3
+			, VLA_CONT_CN_1_SCO
+			, VLA_CONT_CN_2_SCO
+			, VLA_CONT_CN_3_SCO
+		<!-- 	, VLA_CONT_1_VIC_RCN_RTO
+			, VLA_CONT_2_VIC_RCN_RTO
+			, VLA_CONT_3_VIC_RCN_RTO 
+			, VIC_RCN_RST_CONT	 -->
+			, REG_ID 
+			, REG_DTM
+		) VALUES (
+			#{VLA_TGT_NO}
+			,#{VLA_BRD_CD}
+			,#{VLA_BRD_VERS}
+			,#{SEQ_NO}
+			,#{VLA_ITM_CD}
+			,#{VLA_CONT_CD}
+			,#{VLA_STND_CD}
+			,#{VLA_STND_VERS}
+			,#{VLA_TITLE}
+			,#{VLA_CONT_CN_1}
+			,#{VLA_CONT_CN_2}
+			,#{VLA_CONT_CN_3}
+			,#{VLA_CONT_CN_1_SCO}
+			,#{VLA_CONT_CN_2_SCO}
+			,#{VLA_CONT_CN_3_SCO}
+			<!-- ,#{VLA_CONT_1_VIC_RCN_RTO}
+			,#{VLA_CONT_2_VIC_RCN_RTO}
+			,#{VLA_CONT_3_VIC_RCN_RTO} 
+			,#{VIC_RCN_RST_CONT} -->
+			,#{REG_ID}
+			,now()
+		)
+		ON DUPLICATE KEY
+		UPDATE 					
+			VLA_CONT_CN_1_SCO = #{VLA_CONT_CN_1_SCO}
+			,VLA_CONT_CN_2_SCO = #{VLA_CONT_CN_2_SCO}
+			,VLA_CONT_CN_3_SCO = #{VLA_CONT_CN_3_SCO}
+	</insert>
+	
+	<!-- 계약건수 TOP5 -->
+	<select id="R_getMonCTRTop5" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+		    SELECT 
+				CTR.USR_CD
+				,SFTM_GET_USER_NAME(USR_CD) AS CTR_TOP5_NM
+				,COUNT(*) AS CTR_CNT
+	   		FROM TBL_APP_QA_VLA_RST CTR		  
+		   WHERE DATE_FORMAT(CTR_DT, '%Y%m') = #{STA_MONTH}  
+		   GROUP BY CTR.USR_CD
+		   ORDER BY CTR_CNT DESC
+		   LIMIT 5
+
+	</select>
+
+	<!-- 상위점수 TOP5 -->
+	<select id="R_getMonSCRTop5" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+			SELECT 
+			  USR_CD
+			  , SFTM_GET_USER_NAME(USR_CD) AS SCR_TOP5_NM
+			  , ROUND(SUM(F_TOTAL_SUM)/SUM(F_SUM)*100, 1) AS SCR_TOP5
+			  FROM 
+			    (
+			      SELECT 
+			        USR_CD
+			        , SUM(ROW_SUM) AS F_TOTAL_SUM
+			        , SUM(VS_CNT) AS F_CNT
+			        , SUM(TOTAL_SUM) AS F_SUM
+			       FROM 
+			       (
+			        SELECT  
+			          TEMP1.USR_CD
+			          , RST.VLA_BRD_CD
+			          , RST.VLA_BRD_VERS
+			          , SUM(RST.VLA_CONT_CN_1_SCO + RST.VLA_CONT_CN_2_SCO  + RST.VLA_CONT_CN_3_SCO) ROW_SUM
+			          , TEMP2.VS_CNT
+			          , TEMP3.TOT * TEMP2.VS_CNT AS TOTAL_SUM
+			        FROM TBL_APP_QA_VLA_RST_DET RST
+			        INNER JOIN
+			                (
+			                  SELECT VLA_TGT_NO
+			                        , USR_CD 
+			                   FROM TBL_APP_QA_VLA_RST 
+			                  WHERE DATE_FORMAT(CTR_DT, '%Y%m') = #{STA_MONTH}
+			                ) TEMP1
+			        ON (RST.VLA_TGT_NO = TEMP1.VLA_TGT_NO)
+			        INNER JOIN 
+			                (
+			                   SELECT 
+			                      USR_CD
+			                      , COUNT(R1.VLA_TGT_NO) AS VS_CNT
+			                      , R2.VLA_BRD_CD
+			                      , R2.VLA_BRD_VERS
+			                    FROM TBL_APP_QA_VLA_RST R1
+			                   INNER JOIN 
+			                            (
+			                              SELECT
+			                                  DISTINCT  
+			                                  VLA_TGT_NO
+			                                  , VLA_BRD_CD
+			                                  , VLA_BRD_VERS
+			                                  FROM TBL_APP_QA_VLA_RST_DET 
+			                                  GROUP BY VLA_TGT_NO, VLA_BRD_CD, VLA_BRD_VERS
+			                            ) R2
+			                      ON (R1.VLA_TGT_NO = R2.VLA_TGT_NO)
+			                    WHERE DATE_FORMAT(CTR_DT, '%Y%m') = #{STA_MONTH}
+			                    GROUP BY USR_CD, R2.VLA_BRD_CD, R2.VLA_BRD_VERS                  
+			                  ) TEMP2
+			        ON (TEMP1.USR_CD = TEMP2.USR_CD)
+			        INNER JOIN 
+			                (
+			                  SELECT 
+			                    AA.VLA_BRD_CD
+			                    , AA.VLA_BRD_VERS
+			                    , SUM(AA.ROW_SUM) AS TOT
+			                  FROM
+			                    (
+			                      SELECT 
+			                        VLA_BRD_CD
+			                        ,VLA_BRD_VERS
+			                        ,SEQ_NO
+			                        ,SUM(VLA_CONT_CN_1_SCO +  VLA_CONT_CN_2_SCO + VLA_CONT_CN_3_SCO) AS ROW_SUM
+			                      FROM TBL_APP_QA_VLA_STN_SCRT
+			                      GROUP BY VLA_BRD_CD, VLA_BRD_VERS, SEQ_NO
+			                    ) AA
+			                  GROUP BY VLA_BRD_CD, VLA_BRD_VERS
+			                ) TEMP3
+			       ON (TEMP3.VLA_BRD_CD = RST.VLA_BRD_CD AND TEMP3.VLA_BRD_VERS = RST.VLA_BRD_VERS AND TEMP3.VLA_BRD_CD = TEMP2.VLA_BRD_CD AND TEMP3.VLA_BRD_VERS = TEMP2.VLA_BRD_VERS)
+			       GROUP BY VLA_BRD_CD, VLA_BRD_VERS, USR_CD
+
+			      ) FIN
+			      
+			      GROUP BY USR_CD
+
+			    )  FINISH
+
+			GROUP BY USR_CD
+			ORDER BY SCR_TOP5 DESC
+			LIMIT 5
+
+	</select>
+
+	<!-- 인식률 TOP5 -->
+	<select id="R_getMonRCNTop5" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+        SELECT 
+        	CONCAT(ROUND((T1.AUTO_CNT / T2.TOT_CNT*100), 0), '%') AS RCN_TOP5
+      		, T1.USR_CD AS RCN_USR_CD
+      		, SFTM_GET_USER_NAME(T1.USR_CD) AS RCN_TOP5_NM 
+      		, ROUND((T1.AUTO_CNT / T2.TOT_CNT*100), 0) AS RCN_STD
+      		FROM    
+			    (
+			    	SELECT  
+			     	 	COUNT(*) AS AUTO_CNT
+			     		, USR_CD 
+			     	FROM  TBL_APP_QA_VLA_RST			    
+					WHERE DATE_FORMAT(CTR_DT, '%Y%m') = #{STA_MONTH}  
+					  AND AUTO_VLA_YN = 'Y'
+					GROUP BY USR_CD
+			    ) T1
+      		INNER JOIN 
+			    (
+			     	SELECT 
+					     USR_CD
+					     ,SFTM_GET_USER_NAME(USR_CD) AS USR_NM
+					     ,COUNT(*) AS TOT_CNT
+				    FROM TBL_APP_QA_VLA_RST  
+				    WHERE DATE_FORMAT(CTR_DT, '%Y%m') = #{STA_MONTH}  
+				    GROUP BY USR_CD      
+			    ) T2
+      		ON (T1.USR_CD  = T2.USR_CD)
+      		ORDER BY RCN_STD DESC
+      	LIMIT 5
+
+	</select>
+
+
+
+  <!-- 평가표 스크립트 리스트 -->
+  <select id="R_getBrdList" resultType="java.util.HashMap">
+    SELECT DISTINCT SCRT.VLA_BRD_CD AS CODE
+           , INF.VLA_BRD_NM AS CODE_NM
+    FROM   TBL_APP_QA_VLA_STN_SCRT SCRT
+    INNER  JOIN TBL_APP_QA_VLA_BRD_INF INF
+       ON  (SCRT.VLA_BRD_CD = INF.VLA_BRD_CD)
+    WHERE  INF.USE_YN = 'Y'
+    
+  </select>
+
+
+  <!-- 평가표 스크립트 리스트 버젼 조회 -->
+  <select id="R_getBrdVerList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+
+    SELECT DISTINCT VLA_BRD_VERS AS CODE
+       	   , VLA_BRD_VERS AS CODE_NM
+    FROM   TBL_APP_QA_VLA_STN_SCRT   
+    WHERE  VLA_BRD_CD = #{VLA_BRD_CD}         
+
+  </select> 
+  
+
+
+	<!-- 통계 PIVOT을 사용해서 조회 -->
+	<select id="R_getSTAEvaluateList" parameterType="java.util.HashMap" resultType="java.util.HashMap" statementType="CALLABLE">
+
+		{
+			CALL SP_GET_STA_QA_RST(#{SEARCH_START}, #{SEARCH_END}, #{SEARCH_BRD_CD}, #{SEARCH_BRD_CD_VERS}, #{SEARCH_USR_CD}, #{SEARCH_CENT_CD}, #{SEARCH_TEAM_CD})
+		}
+
+	</select>
+
+
+	<!-- 통계 PIVOT을 사용해서 평가표 header 조회 -->
+	<select id="R_getSTAHeader" parameterType="java.util.HashMap" resultType="java.util.HashMap" statementType="CALLABLE">
+
+		{
+			CALL SP_GET_STA_VLA_BRD_HEADER(#{SEARCH_BRD_CD}, #{SEARCH_BRD_CD_VERS})
+		}
+
+	</select>
+
+
+	<insert id="C_ResUsage" parameterType="java.util.HashMap">
+		INSERT INTO STT_TBL_RES_STATISTIC_DAILY (
+			SV_NM
+		,	CPU
+		,	MEM
+		,	IO
+		,	DISK
+		,	SWAP
+		) VALUES (
+			#{SV_NM}
+		,	#{CPU}
+		,	#{MEM}
+		,	#{IO}
+		,	#{DISK}
+		,	#{SWAP}
+		)
+	</insert>
+
+</mapper>

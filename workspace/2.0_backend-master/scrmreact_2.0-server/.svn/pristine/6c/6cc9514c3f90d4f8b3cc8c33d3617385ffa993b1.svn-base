@@ -1,0 +1,636 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="SUP">		
+		
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP010000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 대분류 코드 조회 -->
+	<select id="R_getLagCdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT LAG_CD
+		     , LAG_NM
+		     , MDM_CD
+		     , MDM_NM
+		     , USE_FLAG			
+		FROM   STT_SYS_CMN_CD_LAG
+		<where>
+			<if test="LAG_CD_NM != ''">
+		       (LAG_CD LIKE '%${LAG_CD_NM}%' OR LAG_NM LIKE '%${LAG_CD_NM}%')
+			</if>
+			<if test="USE_FLAG != ''">
+		AND    USE_FLAG = #{USE_FLAG}
+			</if>
+		</where>
+		ORDER BY LAG_CD
+	</select>
+	
+	<!-- 소분류 코드 조회 -->
+	<select id="R_getSmlCdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT LAG_CD
+		     , MDM_CD
+		     , SML_CD
+		     , SML_NM
+		     , CD_VAL
+		     , SORT_ORD
+		     , USE_FLAG			
+		FROM   STT_SYS_CMN_CD_SML S
+		WHERE  LAG_CD = #{LAG_CD}
+		AND    MDM_CD = #{MDM_CD}
+		ORDER BY SORT_ORD, SML_CD
+	</select>
+	
+	<!-- 대분류 코드 수정 -->
+	<update id="U_handleLagCdList" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_CMN_CD_LAG
+		SET    LAG_NM   = #{LAG_NM}
+		     , MDM_CD   = #{MDM_CD}
+		     , MDM_NM   = #{MDM_NM}
+             , USE_FLAG = #{USE_FLAG}
+             , CHG_DTM  = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+		WHERE  LAG_CD   = #{LAG_CD}
+		AND    MDM_CD   = #{MDM_CD}
+	</update>
+	
+	<!-- 대분류 코드 추가 -->
+	<insert id="C_handleLagCdList" parameterType="java.util.HashMap">
+		INSERT INTO STT_SYS_CMN_CD_LAG (
+			LAG_CD
+		  , LAG_NM
+		  , MDM_CD
+		  , MDM_NM
+		  , USE_FLAG
+		  , CHG_DTM
+		) VALUES (
+			#{LAG_CD}
+		  , #{LAG_NM}
+		  , #{MDM_CD}
+		  , #{MDM_NM}
+		  , #{USE_FLAG}
+		  , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+		)
+	</insert>
+	
+	<!-- 소분류 코드 수정 -->
+	<update id="U_handleSmlCdList" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_CMN_CD_SML
+		SET    SML_NM   = #{SML_NM}
+			 , CD_VAL   = #{CD_VAL}
+             , USE_FLAG = #{USE_FLAG}
+             , SORT_ORD = #{SORT_ORD}
+             , CHG_DTM  = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+		WHERE  LAG_CD   = #{LAG_CD}
+		AND    MDM_CD   = #{MDM_CD}
+		AND    SML_CD   = #{SML_CD}
+	</update>
+	
+	<!-- 소분류 코드 추가 -->
+	<insert id="C_handleSmlCdList" parameterType="java.util.HashMap">
+		INSERT INTO STT_SYS_CMN_CD_SML (
+			LAG_CD
+		  , SML_CD
+		  , SML_NM
+		  , MDM_CD 
+		  , CD_VAL  
+		  , SORT_ORD
+		  , USE_FLAG
+		  , CHG_DTM
+		) VALUES (
+			#{LAG_CD}
+		  , #{SML_CD}
+		  , #{SML_NM}
+		  , #{MDM_CD}
+		  , #{CD_VAL}
+		  , #{SORT_ORD}
+		  , #{USE_FLAG}
+		  , DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')
+		)
+	</insert>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP010000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+			
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP020000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 메뉴관리 코드 조회 -->
+	<select id="R_getMenuList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT A.MNU_ID
+			 , A.MNU_NM
+			 , A.PARE_MNU_ID
+			 , A.MNU_TP
+			 , A.PGM_PATH
+			 , A.SORT_ORD
+			 , A.USE_FLAG
+			 , IFNULL(SUBSTR(A.PARE_MNU_ID,1,3), SUBSTR(A.MNU_ID,1,3)) AS MNU_GROUP
+			 , IFNULL(B.SORT_ORD, A.SORT_ORD) AS GROUP_SORT
+			 , IFNULL(SUBSTR(A.MNU_ID,4,6), 0) AS MENU_LV
+		FROM   STT_SYS_MNU A
+		LEFT OUTER JOIN STT_SYS_MNU B
+		ON SUBSTR(A.PARE_MNU_ID,1,3) = B.MNU_ID
+		WHERE 1=1
+		<if test="MNU_ID != ''">
+		AND A.MNU_ID LIKE CONCAT(#{MNU_ID},'%')
+		</if>
+		<if test="MNU_NM != ''">
+		AND A.MNU_NM LIKE CONCAT(#{MNU_NM},'%')
+		</if>
+		<if test="MNU_TP != ''">
+		AND A.MNU_TP = #{MNU_TP}
+		</if>
+		<if test="USE_FLAG != ''">
+		AND A.USE_FLAG = #{USE_FLAG}
+		</if>
+		ORDER BY GROUP_SORT, MNU_GROUP, MENU_LV, A.SORT_ORD;
+	</select>
+	
+	<!-- 메뉴관리 코드 수정 -->
+	<update id="U_handleMenuList" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_MNU
+		SET    MNU_NM      = #{MNU_NM}
+			 , PARE_MNU_ID = #{PARE_MNU_ID}
+			 , MNU_TP      = #{MNU_TP}
+			 , PGM_PATH     = #{PGM_PATH}
+			 , SORT_ORD     = #{SORT_ORD}
+			 , USE_FLAG     = #{USE_FLAG}
+			 , CHG_DTM      = CURRENT_TIMESTAMP()
+			 , CHG_USR_ID   = #{G_USR_CD}
+		WHERE  MNU_ID      = #{MNU_ID}
+	</update>
+	
+	<!-- 메뉴관리 코드 추가 -->
+	<insert id="C_handleMenuList" parameterType="java.util.HashMap">
+		INSERT INTO STT_SYS_MNU 
+			(
+			 MNU_ID
+		   , MNU_NM
+		   , PARE_MNU_ID
+		   , MNU_TP
+		   , PGM_PATH
+		   , SORT_ORD
+		   , USE_FLAG
+		   , REG_DTM
+		   , REG_USR_ID
+		   , CHG_DTM
+		   , CHG_USR_ID
+		    ) 
+		VALUES 
+			(
+			 #{MNU_ID}
+		   , #{MNU_NM}
+		   , #{PARE_MNU_ID}
+		   , #{MNU_TP}
+		   , #{PGM_PATH}
+		   , #{SORT_ORD}
+		   , #{USE_FLAG}
+		   , CURRENT_TIMESTAMP()
+		   , #{G_USR_CD}
+		   , CURRENT_TIMESTAMP()
+		   , #{G_USR_CD}
+		  )
+	</insert>
+	
+	<!-- 메뉴관리 코드 삭제 -->
+	<delete id="D_handleMenuList" parameterType="java.util.HashMap">
+		DELETE FROM STT_SYS_MNU
+		WHERE  MNU_ID = #{MNU_ID}
+	</delete>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP020000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+			
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP030000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 권한관리 - 권한목록 조회 -->
+	<select id="R_getAuthList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT AUTH_LV
+             , AUTH_NM
+        FROM   STT_SYS_AUTH        
+		<if test="G_AUTH_LV != '1'.toString()">
+		WHERE  AUTH_LV != 1
+ 		</if>
+	</select>	
+		
+	<!-- 권한관리 - 프로그램목록 조회 -->
+	<select id="R_getPrgmList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CASE WHEN B.MNU_ID IN ( SELECT A.MNU_ID 
+								        FROM   STT_SYS_MNU_AUTH A
+								        WHERE  AUTH_LV = #{AUTH_LV}) 
+					THEN 'Y' 
+					ELSE 'N'
+					END AS CHK
+			 , B.MNU_ID
+			 , B.PARE_MNU_ID
+			 , B.MNU_NM
+			 , FC_STT_GET_CMN_CD('MNU_TP', 'Type', B.MNU_TP) AS MNU_TP_NM
+		FROM   STT_SYS_MNU B
+		WHERE  USE_FLAG = 'Y' 
+		AND    B.MNU_TP IN ('10', '20')
+	</select>
+	
+	<!-- 권한관리 - 프로그램목록 권한 수정① (프로그램목록 권한 추가, 삭제 후 수정) -->
+	<delete id="D_handlePrgmList" parameterType="java.util.HashMap">
+		DELETE
+		FROM  STT_SYS_MNU_AUTH
+		WHERE AUTH_LV = #{AUTH_LV}
+	</delete>
+	
+	<!-- 권한관리 - 프로그램목록 권한 수정② (프로그램목록 권한 추가, 삭제 후 수정) -->
+	<insert id="C_handlePrgmList" parameterType="java.util.HashMap">
+		INSERT INTO STT_SYS_MNU_AUTH 
+		     (
+			   MNU_ID
+			 , AUTH_LV
+			 ) 
+		VALUES 
+		     (
+		       #{MNU_ID}
+		     , #{AUTH_LV}
+		     )
+	</insert>	
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP030000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+		
+				
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP040000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 기준값관리 조회 -->
+   	<select id="R_getStndValInfo" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+      	<include refid="CMM.PAGING_HEAD"/>
+      	SELECT STND_CD
+      	     , STND_CD_NM
+             , USE_FLAG
+             , APY_PPTY_USE_FLAG
+		     , CENT_SET_CHG_FLAG
+		     , STND_PPTY_USE_FLAG
+		     , ETC1_PPTY_USE_FLAG
+		     , ETC2_PPTY_USE_FLAG
+		     , SORT_ORD
+		     , DATE_FORMAT(REG_DTM, '%Y-%m-%d') AS REG_DTM
+      	FROM   STT_SYS_STND_SET
+      	WHERE  1=1
+      	<if test="STND_CD_NAME != ''">
+         AND  (STND_CD LIKE CONCAT ('%', #{STND_CD_NAME}, '%')
+		 OR    STND_CD_NM LIKE CONCAT ('%', #{STND_CD_NAME}, '%'))
+      	</if>  
+      	<if test="USE_FLAG != ''">
+		AND    USE_FLAG = #{USE_FLAG}
+	 	</if>
+	  	<if test="APY_PPTY_USE_FLAG != ''">
+		AND    APY_PPTY_USE_FLAG = #{APY_PPTY_USE_FLAG}
+	 	</if>
+ 		<if test="STND_PPTY_USE_FLAG != ''">
+		AND    STND_PPTY_USE_FLAG = #{STND_PPTY_USE_FLAG}
+	 	</if>
+      	ORDER BY SORT_ORD, STND_CD DESC 
+      	<include refid="CMM.PAGING_TAIL"/> 
+   	</select>
+      
+   	<!--  기준값 관리 수정 -->
+	<update id="U_handleStndValInfo" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_STND_SET
+		SET	   STND_CD_NM         = #{STND_CD_NM}
+             , USE_FLAG           = #{USE_FLAG}
+             , APY_PPTY_USE_FLAG  = #{APY_PPTY_USE_FLAG}
+             , CENT_SET_CHG_FLAG  = #{CENT_SET_CHG_FLAG}
+             , STND_PPTY_USE_FLAG = #{STND_PPTY_USE_FLAG}
+             , ETC1_PPTY_USE_FLAG = #{ETC1_PPTY_USE_FLAG}
+             , ETC2_PPTY_USE_FLAG = #{ETC2_PPTY_USE_FLAG}
+             , SORT_ORD           = #{SORT_ORD}
+           	 , CHG_DTM            = CURRENT_TIMESTAMP()
+           	 , CHG_USR_ID         = #{G_USR_CD}
+		WHERE  STND_CD = #{STND_CD}
+	</update>
+	   
+   	<!--  기준값 관리 추가 -->
+   	<insert id="C_handleStndValInfo" parameterType="java.util.HashMap">
+      	INSERT INTO STT_SYS_STND_SET (
+           		STND_CD
+         	, 	STND_CD_NM
+         	, 	USE_FLAG
+         	,	APY_PPTY_USE_FLAG
+	        ,	CENT_SET_CHG_FLAG
+	        , 	STND_PPTY_USE_FLAG
+	        , 	ETC1_PPTY_USE_FLAG
+	        , 	ETC2_PPTY_USE_FLAG
+	        , 	SORT_ORD
+	        ,	REG_USR_ID
+	        , 	REG_DTM
+      	) VALUES (
+        		#{STND_CD}
+         	, 	#{STND_CD_NM}
+         	, 	#{USE_FLAG}
+         	, 	#{APY_PPTY_USE_FLAG}
+         	, 	#{CENT_SET_CHG_FLAG}
+        	, 	#{STND_PPTY_USE_FLAG}
+         	, 	#{ETC1_PPTY_USE_FLAG}
+         	, 	#{ETC2_PPTY_USE_FLAG}
+         	, 	#{SORT_ORD}
+         	,	#{G_USR_CD}
+         	, 	CURRENT_TIMESTAMP()
+      	)
+   	</insert>
+   
+   	<!--  기준값관리  삭제 -->
+   	<delete id="D_handleStndValInfo" parameterType="java.util.HashMap" >
+      	DELETE  FROM STT_SYS_STND_SET    
+      	WHERE   STND_CD = #{STND_CD}
+   	</delete>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP040000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+		
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP050000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	 
+ 	<!-- 메시지 관리 : 조회-->
+   	<select id="R_getMsgCdList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+	 	<include refid="CMM.PAGING_HEAD"/>
+		SELECT MSG_CD
+			 , MSG_CONT
+      		 , USE_FLAG
+      		 , FC_STT_GET_USR_NM(REG_USR_ID) AS REG_USR_ID
+      		 , DATE_FORMAT(REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+      	FROM   STT_SYS_CMN_MSG_CD
+  		WHERE  1=1
+  		<if test="MSG_CD_NAME != '' ">
+  		AND    (MSG_CD LIKE CONCAT('%',#{MSG_CD_NAME},'%')
+  		        OR 	
+  		        MSG_CONT LIKE CONCAT('%',#{MSG_CD_NAME},'%'))
+  		</if>	
+  		<if test= "USE_FLAG !=''">
+  		AND USE_FLAG = #{USE_FLAG}
+  		</if>
+		ORDER BY MSG_CD 
+		<include refid="CMM.PAGING_TAIL"/>
+   	</select>
+    
+   	<!-- 메시지 관리 : 저장 -->
+   	<insert id="C_handleMsgCdList" parameterType="java.util.HashMap">
+      	INSERT INTO STT_SYS_CMN_MSG_CD 
+      		(
+      		  MSG_CD
+           	, MSG_CONT
+         	, USE_FLAG
+         	, REG_USR_ID
+         	, REG_DTM
+      		) 
+      		VALUES 
+      		(
+      		  #{MSG_CD}
+         	, #{MSG_CONT}
+         	, #{USE_FLAG}
+         	, #{G_USR_CD}
+         	, CURRENT_TIMESTAMP()
+      		)
+      	ON DUPLICATE KEY 
+      	UPDATE 
+      		MSG_CD = #{MSG_CD}
+   	</insert>
+   
+    <!-- 메시지 관리 : 수정 -->
+	<update id="U_handleMsgCdList" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_CMN_MSG_CD
+		SET    MSG_CONT   = #{MSG_CONT}
+             , USE_FLAG   = #{USE_FLAG}
+           	 , CHG_DTM    = NOW()
+           	 , CHG_USR_ID = #{G_USR_CD}
+		WHERE  MSG_CD     = #{MSG_CD}  			
+	</update>
+	   
+   	<!-- 메시지 관리 : 삭제 -->
+   	<delete id="D_handleMsgCdList" parameterType="java.util.HashMap" >
+      	DELETE  FROM STT_SYS_CMN_MSG_CD  
+      	WHERE   MSG_CD = #{MSG_CD}
+   	</delete>
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP050000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+		
+   	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP060000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 서버 리스트 조회 -->
+	<select id="R_getServerList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT SVR_HST
+			 , SVR_IP
+			 , SVR_CONT
+      		 , USE_FLAG
+      		 , RESC_USE_FLAG
+      		 , TRN_FLAG
+      		 , TRN_STATE
+      		 , TRN_UNQ
+      		 , SCH_DIC_USE_FLAG
+      		 , SCH_DIC_STATE
+      	FROM   STT_SYS_SVR
+  		WHERE  1=1
+  		<if test="SVR_HST_NAME != '' ">
+  		AND    (SVR_HST LIKE CONCAT('%',#{SVR_HST_NAME},'%')
+  		        OR 	
+  		        SVR_IP LIKE CONCAT('%',#{SVR_HST_NAME},'%'))
+  		</if>	
+  		<if test= "USE_FLAG !=''">
+  		AND USE_FLAG = #{USE_FLAG}
+  		</if>
+		ORDER BY SVR_HST 
+   	</select>
+   	   	
+   	<!-- 서버 관리 : 저장 -->
+   	<insert id="C_handleServerList" parameterType="java.util.HashMap">
+      	INSERT INTO STT_SYS_SVR 
+      		(
+      		   SVR_HST
+			 , SVR_IP
+			 , SVR_CONT
+      		 , USE_FLAG
+      		 , RESC_USE_FLAG
+      		 , TRN_FLAG
+      		 , TRN_STATE
+      		 , SCH_DIC_USE_FLAG
+      		 , SCH_DIC_STATE
+           	 , REG_DTM   
+           	 , REG_USR_ID
+      		) 
+      		VALUES 
+      		(
+      		   #{SVR_HST}
+			 , #{SVR_IP}
+			 , #{SVR_CONT}
+      		 , #{USE_FLAG}
+      		 , #{RESC_USE_FLAG}
+      		 , #{TRN_FLAG}
+      		 , 'N'
+      		 , #{SCH_DIC_USE_FLAG}
+      		 , 'N'
+           	 , NOW()
+           	 , #{G_USR_CD}
+      		)
+      	ON DUPLICATE KEY 
+      	UPDATE 
+      		SVR_HST = #{SVR_HST}
+   	</insert>
+   
+    <!-- 서버 관리 : 수정 -->
+	<update id="U_handleServerList" parameterType="java.util.HashMap">
+		UPDATE STT_SYS_SVR
+		SET    SVR_IP           = #{SVR_IP}
+			 , SVR_CONT         = #{SVR_CONT}
+      		 , USE_FLAG         = #{USE_FLAG}
+      		 , RESC_USE_FLAG    = #{RESC_USE_FLAG}
+      		 , TRN_FLAG         = #{TRN_FLAG}
+      		 , SCH_DIC_USE_FLAG = #{SCH_DIC_USE_FLAG}
+           	 , REG_DTM          = NOW()
+           	 , REG_USR_ID       = #{G_USR_CD}
+		WHERE  SVR_HST     = #{SVR_HST}  			
+	</update>
+	   
+   	<!-- 서버 관리 : 삭제 -->
+   	<delete id="D_handleServerList" parameterType="java.util.HashMap" >
+      	DELETE  FROM STT_SYS_SVR  
+      	WHERE   SVR_HST = #{SVR_HST}
+   	</delete>
+   	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP060000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP070000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 채널 조회 -->
+	<select id="R_getChennelList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CN.UNQ
+             , CN.CONST_CD
+	         , CS.CONST_NM
+	         , IFNULL(DATE_FORMAT(CN.CHG_DTM, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(CN.REG_DTM, '%Y-%m-%d %H:%i:%s')) AS REG_DTM
+	         , IFNULL(CN.CHG_USR_ID, CN.REG_USR_ID) AS REG_USR_ID
+             , CS.CENT_CD
+	         , CS.TEAM_CD
+	         , FC_STT_GET_CENT_NM(CS.CENT_CD) AS CENT_NM
+	         , FC_STT_GET_TEAM_NM(CS.CENT_CD, CS.TEAM_CD) AS TEAM_NM
+	         , CN.USE_FLAG
+	         , CN.CONST_IP
+	         , CN.EXT_NUM
+        FROM   STT_SYS_CHNL	CN
+        LEFT OUTER JOIN STT_SYS_CONST CS
+        ON     CN.CONST_CD = CS.CONST_CD
+        WHERE 1=1	
+        <if test="CENT_CD != '' ">
+  		AND    CS.CENT_CD = #{CENT_CD}
+  		</if>	
+  		<if test="TEAM_CD != '' ">
+  		AND    CS.TEAM_CD = #{TEAM_CD}
+  		</if>	
+  		<if test="SRCH_VALUE != '' ">
+  		AND    (CS.CONST_NM LIKE CONCAT(#{SRCH_VALUE},'%') OR CS.CONST_CD LIKE CONCAT(#{SRCH_VALUE},'%'))
+  		</if>	
+  		<if test="USE_FLAG != '' ">
+  		AND    CN.USE_FLAG = #{USE_FLAG}
+  		</if>	
+	</select>
+	
+	<!-- 채널 조회 -->
+	<select id="R_getNewChennelList" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT CONST_NM
+             , CONST_CD
+             , CENT_CD
+	         , TEAM_CD
+	         , FC_STT_GET_CENT_NM(CENT_CD) AS CENT_NM
+	         , FC_STT_GET_TEAM_NM(CENT_CD, TEAM_CD) AS TEAM_NM
+        FROM   STT_SYS_CONST
+        WHERE 1=1	
+        <if test="CENT_CD != '' ">
+  		AND    CENT_CD = #{CENT_CD}
+  		</if>	
+  		<if test="TEAM_CD != '' ">
+  		AND    TEAM_CD = #{TEAM_CD}
+  		</if>	
+  		<if test="SRCH_VALUE != '' ">
+  		AND    (CONST_NM LIKE CONCAT(#{SRCH_VALUE},'%') OR CONST_CD LIKE CONCAT(#{SRCH_VALUE},'%'))
+  		</if>	
+  		<if test="USE_FLAG != '' ">
+  		AND    USE_FLAG = #{USE_FLAG}
+  		</if>	
+	</select>
+	
+	<!-- 채널 추가 추가 -->
+	<insert id="C_setChennelList" parameterType="java.util.HashMap">
+		INSERT INTO STT_SYS_CHNL (
+			   UNQ
+             , CONST_CD
+	         , REG_DTM
+	         , REG_USR_ID
+             , USE_FLAG
+	         , CONST_IP
+	         , EXT_NUM	
+		) SELECT
+			   nextval(SQ_STT_SYS_CHNL)
+             , #{CONST_CD}
+	         , CURRENT_TIMESTAMP()
+	         , #{G_USR_CD}
+             , #{USE_FLAG}
+	         , #{CONST_IP}
+	         , #{EXT_NUM}
+		ON DUPLICATE KEY
+		UPDATE 
+	           CHG_DTM    = CURRENT_TIMESTAMP()
+	         , CHG_USR_ID = #{G_USR_CD}
+             , USE_FLAG   = #{USE_FLAG}
+	         , CONST_IP   = #{CONST_IP}
+	         , EXT_NUM	  = #{EXT_NUM}
+	</insert>	
+	
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP070000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+		
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP 080000 START   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+	<!-- 시스템 로그 조회 -->
+	<select id="R_getSysLogList" parameterType="java.util.HashMap" resultType="java.util.HashMap">	
+		<include refid="CMM.PAGING_HEAD"/> 
+		SELECT PGM_NM
+             , ERR_CD
+	         , ERR_MSG
+	         , DATE_FORMAT(REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+	         , EXE_HST
+	         , EXE_HST_IP
+        FROM   STT_SYS_ERR_LOG
+        WHERE  DATE_FORMAT(REG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+        ORDER BY REG_DTM DESC
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<!-- 사용자 로그 조회 -->
+	<select id="R_getUserLogList" parameterType="java.util.HashMap" resultType="java.util.HashMap">	
+		<include refid="CMM.PAGING_HEAD"/> 
+		SELECT ACT_TP
+             , ACT_CD
+	         , DATE_FORMAT(LOG_REG_DTM, '%Y-%m-%d %H:%i:%s') AS LOG_REG_DTM
+			 , FC_STT_GET_CENT_NM(CENT_CD) AS CENT_NM
+			 , FC_STT_GET_TEAM_NM(CENT_CD, TEAM_CD) AS TEAM_NM
+	         , USR_ID
+	         , USR_NM
+	         , IFNULL(CHG_USR_ID, REG_USR_ID) AS REG_USR_ID
+        FROM   STT_USR_LOG
+        WHERE  DATE_FORMAT(LOG_REG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+        ORDER BY LOG_REG_DTM DESC
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+	
+	<!-- 학습 로그 조회 -->
+	<select id="R_getTrainLogList" parameterType="java.util.HashMap" resultType="java.util.HashMap">	
+		<include refid="CMM.PAGING_HEAD"/> 
+		SELECT L.TRN_UNQ
+	         , DATE_FORMAT(L.REG_DTM, '%Y-%m-%d %H:%i:%s') AS REG_DTM
+	         , DATE_FORMAT(L.TRN_DTM, '%Y-%m-%d %H:%i:%s') AS TRN_DTM
+	         , L.TRN_TIT
+	         , L.TRN_STATE
+	         , L.ERR_CD
+	    	 , E.SML_NM AS ERR_CONT
+	         , L.SVR_IP
+	         , L.SVR_HST
+	         , FC_STT_GET_USR_NM(L.REG_USR_ID) AS REG_USR_NM
+        FROM   STT_TRN_LOG L
+        LEFT OUTER JOIN STT_SYS_CMN_CD_SML E
+	    ON     (L.ERR_CD = E.SML_CD AND E.LAG_CD = 'STT_TRN_LST' AND E.MDM_CD = 'ERR_CD')
+        WHERE  DATE_FORMAT(L.REG_DTM, '%Y%m%d') BETWEEN #{START_DATE} AND #{END_DATE}
+        ORDER BY L.REG_DTM DESC
+		<include refid="CMM.PAGING_TAIL"/>
+	</select>
+		
+	<!-- @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@   SUP080000 END   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ -->
+	
+ </mapper>
